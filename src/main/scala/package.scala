@@ -1,6 +1,6 @@
 package com.ptwales
 
-package object DataSheet {
+package object sheets {
 
   /** Representation of a cell or element.  None if blank. */
   type Cell = Option[Any]

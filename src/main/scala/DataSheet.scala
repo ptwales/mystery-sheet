@@ -1,9 +1,9 @@
-package com.ptwales.DataSheet
+package com.ptwales.sheets
 
-import scala.collection.JavaConverters._
 import scala.util.{Try, Success, Failure}
 
-import java.nio.file.{Path, Files}
+import java.nio.file.Path
+import java.net.URL
 
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
@@ -84,17 +84,26 @@ trait DataSheet {
 /** Factory object for [[DataSheet]] */
 object DataSheet {
 
-  /** Returns an [[DataSheet]] from the given file.
+  /** Returns a [[DataSheet]] from agiven file URL.
+    * 
+    * @param url  URL to a data file.
+    * @return A new [[DataSheet]] instance.
+    */
+  def apply(url: URL): DataSheet = {
+    val ext = url.toString.split('.').last
+    Try(factory(ext)(url)).get
+  }
+
+  /** Returns an [[DataSheet]] from the given file path.
     *
     * @param  path  Path to a data file.
     * @return A new [[DataSheet]] instance.
     */
   def apply(path: Path): DataSheet = {
-    val ext = path.toString.split('.').last
-    Try(factory(ext)(path)).get
+    apply(path.toUri.toURL)
   }
 
-  private type Factory = Path => DataSheet
+  private type Factory = URL => DataSheet
   private val factory = Map[String, Factory](
     "xlsx" -> (excel _ compose xssf _ ),
     "xls"  -> (excel _ compose hssf _ ),
@@ -107,92 +116,20 @@ object DataSheet {
     new ExcelTable(book.getSheetAt(0))
   }
 
-  private def xssf(path: Path): Workbook = {
-    new XSSFWorkbook(path.toFile)
+  private def xssf(url: URL): Workbook = {
+    val inStream = url.openStream
+    new XSSFWorkbook(inStream)
   }
 
-  private def hssf(path: Path): Workbook = {
-    new HSSFWorkbook(Files.newInputStream(path))
+  private def hssf(url: URL): Workbook = {
+    val inStream = url.openStream
+    new HSSFWorkbook(inStream)
   }
 
-  private def txt(delim: Char)(path: Path): DataSheet = {
-    val src = io.Source.fromFile(path.toFile)
-    val data = try src.mkString("\n") finally src.close
-    new CSVTable(data.replace("\r", ""), delim, '\n')
-  }
-
-}
-
-/** Implementation of DataSheet for excel workbooks.
-  *
-  * Implementation of DataSheet for excel workbooks using apache poi library.
-  *
-  * @constructor  Create a POITable instance.
-  * @param  sheet POI Sheet used to create a table.
-  */
-private class ExcelTable(sheet: Sheet) extends DataSheet {
-
-  val rows: Table = {
-    val rowIter = sheet.rowIterator.asScala
-    val allRows = rowIter.map(cellsOfRow _)
-    val definedRows = allRows takeWhile { (row: Row) =>
-      (row.size > 1) || (row(0).getOrElse("").toString.trim.size > 0)
-    }
-    definedRows.toVector
-  }
-
-  import org.apache.poi.ss.usermodel.{Row => POIRow}
-  import org.apache.poi.ss.usermodel.{Cell => POICell}
-  import org.apache.poi.ss.usermodel.DateUtil
-
-  /** Returns the values of each cell in a row. */
-  private def cellsOfRow(row: POIRow): Row = {
-    val first = row.getFirstCellNum
-    val last = row.getLastCellNum
-    val range = first.until(last)
-    range map {
-      (i: Int) => Option(row.getCell(i)) flatMap {
-        (c: POICell) => valueOfCell(c)
-      }
-    }
-  }
-
-  /** Returns the value of a cell as an Option[Any] */
-  private def valueOfCell(cell: POICell): Option[Any] = cell.getCellType match {
-    case POICell.CELL_TYPE_NUMERIC => Option(
-      if (DateUtil.isCellDateFormatted(cell)) cell.getDateCellValue
-      else cell.getNumericCellValue
-    )
-    case POICell.CELL_TYPE_STRING  => Option(cell.getStringCellValue)
-    case POICell.CELL_TYPE_FORMULA => Option(cell.getStringCellValue)
-    case POICell.CELL_TYPE_BLANK   => None
-    case POICell.CELL_TYPE_BOOLEAN => Option(cell.getBooleanCellValue)
-    case POICell.CELL_TYPE_ERROR   => None
-  }
-}
-
-/** Implementation of DataSheet for csv files.
-  *
-  */
-private class CSVTable(text: String, colSep: Char, rowSep: Char) 
-extends DataSheet {
-
-  val rows: Table = {
-    val lines = seqSplit(text, rowSep)
-    lines map {
-      (row: String) => seqSplit(row, colSep) map {
-        (el: String) => cellOf(el)
-      }
-    }
-  }
-
-  private def seqSplit(text: String, sep: Char) = {
-    text.split(sep).toVector
-  }
-
-  private def cellOf(el: String): Cell = {
-    if (el.isEmpty) None
-    else Some(Try(el.toInt).getOrElse(el))
+  private def txt(delim: Char)(url: URL): DataSheet = {
+    val src = io.Source.fromURL(url)
+    val data = try src.mkString.replace("\r", "") finally src.close
+    new CSVSheet(data, delim, '\n')
   }
 
 }

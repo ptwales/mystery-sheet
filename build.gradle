@@ -12,6 +12,7 @@ dependencies {
     compile "org.apache.poi:poi:${poi}+"
     compile "org.apache.poi:poi-ooxml:${poi}+"
     compile "org.apache.xmlbeans:xmlbeans:2.6.0"
+    compile "org.apache.commons:commons-csv:1.1"
     compile "org.scala-lang:scala-library:${sv}+"
     compile "com.github.scopt:scopt_${sv}:3.3+"
 }
