@@ -129,7 +129,7 @@ object DataSheet {
   private def txt(delim: Char)(url: URL): DataSheet = {
     val src = io.Source.fromURL(url)
     val data = try src.mkString.replace("\r", "") finally src.close
-    new CSVSheet(data, delim, '\n')
+    CSVSheet(data, delim, '\n')
   }
 
 }

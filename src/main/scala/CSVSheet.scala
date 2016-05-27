@@ -1,32 +1,31 @@
 package com.ptwales.sheets
 
 import scala.util.{Try, Success, Failure}
+import scala.collection.JavaConverters._
+
+import org.apache.commons.csv.{CSVParser, CSVFormat, CSVRecord}
 
 /** Implementation of [[DataSheet]] for csv or any character delimited files.
   *
-  * Wraps Apache Commons CSV class.
+  * Later will wrap Apache Commons CSV class.
   */
-private class CSVSheet(text: String, colSep: Char, rowSep: Char) 
+private class CSVSheet(text: String, format: CSVFormat) 
 extends DataSheet {
 
   val rows: Table = {
-    val lines = seqSplit(text, rowSep)
-    lines map {
-      (line: String) => seqSplit(line, colSep) map {
-        (el: String) => cellOf(el)
-      }
-    }
+    val parser = CSVParser.parse(text, format)
+    val lines = parser.getRecords.asScala
+    lines.map(readRecord _).toVector
   }
 
-  private def seqSplit(text: String, sep: Char) = {
-    text.split(sep).toVector
+  private def readRecord(line: CSVRecord): Row = {
+    (0 until line.size) map { i => cellOf(line.get(i)) }
   }
 
   private def cellOf(el: String): Cell = {
     if (el.isEmpty) None
     else Some(Try(el.toInt).getOrElse(el))
   }
-
 }
 
 /** Factory object for [[CSVSheet]].
@@ -49,6 +48,13 @@ object CSVSheet {
   }
 
   def apply(text: String, colSep: Char, rowSep: Char): DataSheet = {
-    new CSVSheet(text, colSep, rowSep)
+    var format = CSVFormat.DEFAULT
+    format = format.withDelimiter(colSep)
+    format = format.withRecordSeparator("\n")
+    apply(text, format)
+  }
+
+  def apply(text: String, format: CSVFormat): DataSheet = {
+    new CSVSheet(text, format)
   }
 }
