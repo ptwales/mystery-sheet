@@ -44,14 +44,9 @@ class RandomCSVGenerator extends FunSuite {
       val text = data.map(_.mkString(col.toString))
 
       test(s"Test #$i in $name: with c=$col, r=$row, q=$quote") {
-        // write text to file in charset
         val dest = Paths.get(name)
         val written = Files.write(dest, text.asJava, charset)
-        //// read as CSVSheet
-        val sheet: DataSheet = CSVSheet(written, col, row)
-        //// check that data matches
-        ////???
-        //// delete file
+        //val sheet: DataSheet = CSVSheet(written, col, row)
         Files.delete(written)
       }
     }
