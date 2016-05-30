@@ -3,6 +3,9 @@ package com.ptwales.sheets
 import scala.util.{Try, Success, Failure}
 import scala.collection.JavaConverters._
 
+import java.nio.file.Path
+import java.net.URL
+
 import org.apache.commons.csv.{CSVParser, CSVFormat, CSVRecord}
 
 /** Implementation of [[DataSheet]] for csv or any character delimited files.
@@ -35,26 +38,44 @@ extends DataSheet {
   */
 object CSVSheet {
 
+  val defaultColSep: Char = ','
+  val defaultRowSep: Char = '\n'
+
   /** Create a normal csv file.
     *
     * Assumes comma as column separator and LF as row separator
     */
   def apply(text: String): DataSheet = {
-    apply(text, ',', '\n')
+    apply(text, defaultColSep, defaultRowSep)
   }
 
   def apply(text: String, colSep: Char): DataSheet = {
-    apply(text, colSep, '\n');
+    apply(text, colSep, defaultRowSep);
   }
 
   def apply(text: String, colSep: Char, rowSep: Char): DataSheet = {
     var format = CSVFormat.DEFAULT
     format = format.withDelimiter(colSep)
-    format = format.withRecordSeparator("\n")
+    format = format.withRecordSeparator(defaultRowSep.toString)
     apply(text, format)
   }
 
   def apply(text: String, format: CSVFormat): DataSheet = {
     new CSVSheet(text, format)
   }
+
+  def apply(path: Path): DataSheet = {
+    apply(path, defaultColSep, defaultRowSep)
+  }
+
+  def apply(path: Path, colSep: Char): DataSheet = {
+    apply(path, colSep, defaultRowSep)
+  }
+
+  def apply(path: Path, colSep: Char, rowSep: Char): DataSheet = {
+    val src = io.Source.fromFile(path.toUri)
+    val text = try src.mkString("\n") finally src.close
+    apply(text, colSep, rowSep)
+  }
+
 }
