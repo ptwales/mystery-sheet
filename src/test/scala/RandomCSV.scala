@@ -15,37 +15,48 @@ class RandomCSVGenerator extends FunSuite {
 
   type Data = Vector[Vector[String]]
 
-  val charsetsToTest = Charset.availableCharsets.asScala
+  val charsetsToTest = Charset.availableCharsets.asScala.values.map({
+      (cs: Charset) => cs -> allCharsInCharset(cs)
+    }).toMap
+
   val testsPerCharset = 5
-  for ( i <- (1 to testsPerCharset)) {
+  for ((charset, chars) <- charsetsToTest; i <- (1 to testsPerCharset)) {
 
-    var chars: Set[Char] = ???
+    val name = charset.displayName
+    var availableChars = chars
 
-    val col = randomDelim(chars)
-    chars -= col
+    val col = randomDelim(availableChars)
+    availableChars -= col
 
-    val row = randomDelim(chars)
-    chars -= row
+    val row = randomDelim(availableChars)
+    availableChars -= row
 
-    val quote = '"' // randomDelim(chars)
-    chars -= quote
+    val quote = '"' // randomDelim(availableChars)
+    availableChars -= quote
 
-    val data = randomData(chars, quote)
+    val data = randomData(availableChars, quote)
     val text = data.map(_.mkString(col.toString))
 
-    for ((name, charset) <- charsetsToTest) {
-      test(s"Test #$i in $name: with c=$col, r=$row, q=$quote") {
-        // write text to file in charset
-        val dest = Paths.get(getClass.getResource("/random-csv/" + name).toURI)
-        val written = Files.write(dest, text.asJava, charset)
-        // read as CSVSheet
-        val sheet: DataSheet = CSVSheet(written, col, row)
-        // check that data matches
-        //???
-        // delete file
-        Files.delete(written)
-      }
+    test(s"Test #$i in $name: with c=$col, r=$row, q=$quote") {
+      // write text to file in charset
+      val dest = Paths.get(getClass.getResource("/random-csv/" + name).toURI)
+      val written = Files.write(dest, text.asJava, charset)
+      // read as CSVSheet
+      val sheet: DataSheet = CSVSheet(written, col, row)
+      // check that data matches
+      //???
+      // delete file
+      Files.delete(written)
     }
+  }
+
+  private def allCharsInCharset(charset: Charset): Set[Char] = {
+    val encoder = charset.newEncoder
+    var result = Set[Char]()
+    for (c <- (Char.MinValue to Char.MaxValue) if encoder.canEncode(c)) {
+      result += c
+    }
+    return result
   }
 
   private def randomDelim(chars: Set[Char]): Char = {
