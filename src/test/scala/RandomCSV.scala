@@ -15,11 +15,15 @@ class RandomCSVGenerator extends FunSuite {
 
   type Data = Vector[Vector[String]]
 
-  val charsetsToTest = Charset.availableCharsets.asScala.values.map({
-      (cs: Charset) => cs -> allCharsInCharset(cs)
-    }).toMap
+  val charsetsToTest = {
+    val allCharsets = Charset.availableCharsets.asScala.values
+    val encodeable = allCharsets.filter(_.canEncode)
+    encodeable.map({
+        (cs: Charset) => cs -> allCharsInCharset(cs)
+      }).toMap
+  }
 
-  val testsPerCharset = 5
+  val testsPerCharset = 1
   for ((charset, chars) <- charsetsToTest; i <- (1 to testsPerCharset)) {
 
     val name = charset.displayName
