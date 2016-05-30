@@ -15,42 +15,45 @@ class RandomCSVGenerator extends FunSuite {
 
   type Data = Vector[Vector[String]]
 
-  val charsetsToTest = {
-    val allCharsets = Charset.availableCharsets.asScala.values
-    val encodeable = allCharsets.filter(_.canEncode)
-    encodeable.map({
-        (cs: Charset) => cs -> allCharsInCharset(cs)
-      }).toMap
-  }
+  //val charsetsToTest = Charset.availableCharsets.asScala.values filter {
+  //  _.canEncode
+  //}
 
+  val charsetsToTest = Set("US-ASCII", "IBM037") map { Charset.forName(_) }
   val testsPerCharset = 1
-  for ((charset, chars) <- charsetsToTest; i <- (1 to testsPerCharset)) {
 
-    val name = charset.displayName
-    var availableChars = chars
+  for (charset <- charsetsToTest) {
 
-    val col = randomDelim(availableChars)
-    availableChars -= col
+    val chars = allCharsInCharset(charset)
 
-    val row = randomDelim(availableChars)
-    availableChars -= row
+    for (i <- (1 to testsPerCharset)) {
 
-    val quote = '"' // randomDelim(availableChars)
-    availableChars -= quote
+      val name = charset.displayName
+      var availableChars = chars
 
-    val data = randomData(availableChars, quote)
-    val text = data.map(_.mkString(col.toString))
+      val col = randomDelim(availableChars)
+      availableChars -= col
 
-    test(s"Test #$i in $name: with c=$col, r=$row, q=$quote") {
-      // write text to file in charset
-      val dest = Paths.get(getClass.getResource("/random-csv/" + name).toURI)
-      val written = Files.write(dest, text.asJava, charset)
-      // read as CSVSheet
-      val sheet: DataSheet = CSVSheet(written, col, row)
-      // check that data matches
-      //???
-      // delete file
-      Files.delete(written)
+      val row = randomDelim(availableChars)
+      availableChars -= row
+
+      val quote = '"' // randomDelim(availableChars)
+      availableChars -= quote
+
+      val data = randomData(availableChars, quote)
+      val text = data.map(_.mkString(col.toString))
+
+      test(s"Test #$i in $name: with c=$col, r=$row, q=$quote") {
+        // write text to file in charset
+        val dest = Paths.get(name)
+        val written = Files.write(dest, text.asJava, charset)
+        //// read as CSVSheet
+        val sheet: DataSheet = CSVSheet(written, col, row)
+        //// check that data matches
+        ////???
+        //// delete file
+        Files.delete(written)
+      }
     }
   }
 

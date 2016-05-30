@@ -17,3 +17,8 @@ dependencies {
     compile "com.github.scopt:scopt_${sv}:3.3+"
 }
 
+test {
+  testLogging {
+    events "passed", "skipped", "failed"
+  }
+}
