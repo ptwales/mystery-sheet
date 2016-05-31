@@ -20,7 +20,11 @@ class RandomCSVGenerator extends FunSuite {
   //}
 
   val charsetsToTest = Set("US-ASCII", "IBM037") map { Charset.forName(_) }
-  val testsPerCharset = 1
+  val testsPerCharset = 10
+  val maxColCount = 256
+  val maxRowCount = 256
+  val maxCellSize = 256
+  val quoteProbability = 0.25
 
   for (charset <- charsetsToTest) {
 
@@ -31,10 +35,10 @@ class RandomCSVGenerator extends FunSuite {
       val name = charset.displayName
       var availableChars = chars
 
-      val col = randomDelim(availableChars)
+      val col = randomChar(availableChars)
       availableChars -= col
 
-      val row = randomDelim(availableChars)
+      val row = randomChar(availableChars)
       availableChars -= row
 
       val quote = '"' // randomDelim(availableChars)
@@ -43,7 +47,7 @@ class RandomCSVGenerator extends FunSuite {
       val data = randomData(availableChars, quote)
       val text = data.map(_.mkString(col.toString))
 
-      test(s"Test #$i in $name: with c=$col, r=$row, q=$quote") {
+      test(s"Test #$i in $name: with c=`$col`, r=`$row`, q=`$quote`") {
         val dest = Paths.get(name)
         val written = Files.write(dest, text.asJava, charset)
         //val sheet: DataSheet = CSVSheet(written, col, row)
@@ -61,23 +65,24 @@ class RandomCSVGenerator extends FunSuite {
     return result
   }
 
-  private def randomDelim(chars: Set[Char]): Char = {
-    Random.shuffle(chars.toList).head
+  private def randomChar(chars: Set[Char]): Char = {
+    val n = Random.nextInt(chars.size)
+    chars.iterator.drop(n).next
   }
 
   private def randomData(chars: Set[Char], quote: Char): Data = {
 
-    val rows = Random.nextInt(256)
-    val cols = Random.nextInt(256)
+    val rows = Random.nextInt(maxRowCount)
+    val cols = Random.nextInt(maxColCount)
 
     def randomCell(quoteProb: Double): String = {
-      val cellSize = Random.nextInt(chars.size)
-      val cell = Random.shuffle(chars.toList).take(cellSize).mkString
+      val cellSize = Random.nextInt(maxCellSize)
+      val cell = Seq.fill(cellSize)(randomChar(chars)).mkString
       if (math.random < quoteProb) quote + cell + quote
       else cell
     }
 
-    Vector.fill(rows, cols)(randomCell(0.25))
+    Vector.fill(rows, cols)(randomCell(quoteProbability))
   }
 }
 
