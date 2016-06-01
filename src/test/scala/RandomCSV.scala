@@ -14,25 +14,32 @@ import org.scalatest.junit.JUnitRunner
 class RandomCSVGenerator extends FunSuite {
 
   type Data = Vector[Vector[String]]
+  type CharList = IndexedSeq[Char]
 
-  //val charsetsToTest = Charset.availableCharsets.asScala.values filter {
-  //  _.canEncode
-  //}
-
-  val charsetsToTest = Set("US-ASCII", "IBM037") map { Charset.forName(_) }
-  val testsPerCharset = 10
+  val testsPerCharset = 1
   val maxColCount = 256
   val maxRowCount = 256
   val maxCellSize = 256
   val quoteProbability = 0.25
+  val charsetsToTest = Charset.availableCharsets.asScala.values.filter(_.canEncode)
 
   for (charset <- charsetsToTest) {
+    charsetBattery(charset, 1)
+  }
+
+  private def charsetBattery(charset: Charset, times: Int): Unit = {
 
     val chars = allCharsInCharset(charset)
 
     for (i <- (1 to testsPerCharset)) {
+      testCharset(charset, chars)
+    }
+  }
+
+  private def testCharset(charset: Charset, chars: Set[Char]): Unit = {
 
       val name = charset.displayName
+      println(s"Testing Charset $name")
       var availableChars = chars
 
       val col = randomChar(availableChars)
@@ -44,36 +51,43 @@ class RandomCSVGenerator extends FunSuite {
       val quote = '"' // randomDelim(availableChars)
       availableChars -= quote
 
-      val data = randomData(availableChars, quote)
+      val data = randomData(availableChars.toVector, quote)
       val text = data.map(_.mkString(col.toString))
 
-      test(s"Test #$i in $name: with c=`$col`, r=`$row`, q=`$quote`") {
+      test(s"Test $name: with c=`$col`, r=`$row`, q=`$quote`") {
         val dest = Paths.get(name)
-        val written = Files.write(dest, text.asJava, charset)
-        //val sheet: DataSheet = CSVSheet(written, col, row)
-        Files.delete(written)
+        try {
+          val written = Files.write(dest, text.asJava, charset)
+          //val sheet: DataSheet = CSVSheet(written, col, row)
+        } finally {
+          Files.delete(dest)
+        }
       }
-    }
   }
-
+  
   private def allCharsInCharset(charset: Charset): Set[Char] = {
     val encoder = charset.newEncoder
     var result = Set[Char]()
     for (c <- (Char.MinValue to Char.MaxValue) if encoder.canEncode(c)) {
       result += c
     }
-    return result
+    result
   }
 
   private def randomChar(chars: Set[Char]): Char = {
-    val n = Random.nextInt(chars.size)
-    chars.iterator.drop(n).next
+    randomChar(chars.toVector)
   }
 
-  private def randomData(chars: Set[Char], quote: Char): Data = {
+  private def randomChar(chars: CharList): Char = {
+    val n = Random.nextInt(chars.size)
+    chars(n)
+  }
+
+  private def randomData(chars: CharList, quote: Char): Data = {
 
     val rows = Random.nextInt(maxRowCount)
     val cols = Random.nextInt(maxColCount)
+    val charSeq = chars.toVector
 
     def randomCell(quoteProb: Double): String = {
       val cellSize = Random.nextInt(maxCellSize)
