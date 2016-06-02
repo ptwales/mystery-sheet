@@ -16,12 +16,14 @@ class RandomCSVGenerator extends FunSuite {
   type Data = Vector[Vector[String]]
   type CharList = IndexedSeq[Char]
 
-  val testsPerCharset = 1
-  val maxColCount = 256
-  val maxRowCount = 256
-  val maxCellSize = 256
-  val quoteProbability = 0.25
-  val charsetsToTest = Charset.availableCharsets.asScala.values.filter(_.canEncode)
+  val testsPerCharset = 15
+  val maxColCount = 32
+  val maxRowCount = 32
+  val maxCellSize = 32
+  val quoteProb = 0.25
+
+  val charsetsToTest = Seq("UTF-8"
+  ).map(Charset.forName(_))
 
   for (charset <- charsetsToTest) {
     charsetBattery(charset, 1)
@@ -29,74 +31,72 @@ class RandomCSVGenerator extends FunSuite {
 
   private def charsetBattery(charset: Charset, times: Int): Unit = {
 
-    val chars = allCharsInCharset(charset)
-
     for (i <- (1 to testsPerCharset)) {
-      testCharset(charset, chars)
+      val tg = new TextGenerator(charset)
+      testCharset(tg)
     }
   }
 
-  private def testCharset(charset: Charset, chars: Set[Char]): Unit = {
+  private def testCharset(tg: TextGenerator): Unit = {
 
-      val name = charset.displayName
-      println(s"Testing Charset $name")
-      var availableChars = chars
+      val name = tg.charset.displayName
 
-      val col = randomChar(availableChars)
-      availableChars -= col
+      val quote = '"' 
+      tg.forbiddenChars += quote
 
-      val row = randomChar(availableChars)
-      availableChars -= row
+      val row = tg.randomChar
+      tg.forbiddenChars += row
 
-      val quote = '"' // randomDelim(availableChars)
-      availableChars -= quote
+      val col = tg.randomChar
+      tg.forbiddenChars += col
 
-      val data = randomData(availableChars.toVector, quote)
-      val text = data.map(_.mkString(col.toString))
+      val rowCount = Random.nextInt(maxRowCount)
+      val colCount = Random.nextInt(maxColCount)
+
+      val data = Vector.fill(rowCount, colCount)(
+        tg.randomString(maxCellSize, quote, quoteProb))
+
+      val rows = data.map(_.mkString(col.toString))
+      val text = rows.mkString(row.toString)
+      val lines = text.split(System.lineSeparator).toVector
 
       test(s"Test $name: with c=`$col`, r=`$row`, q=`$quote`") {
-        val dest = Paths.get(name)
+        val dest = Paths.get(name + ".csv")
         try {
-          val written = Files.write(dest, text.asJava, charset)
-          //val sheet: DataSheet = CSVSheet(written, col, row)
+          val written = Files.write(dest, lines.asJava, tg.charset)
+          val sheet: DataSheet = CSVSheet(written, col, row)
         } finally {
           Files.delete(dest)
         }
       }
   }
-  
-  private def allCharsInCharset(charset: Charset): Set[Char] = {
+}
+
+class TextGenerator(cs: Charset) {
+
+  val charset: Charset = cs
+  var forbiddenChars: Set[Char] = Set[Char]()
+
+  val allChars: IndexedSeq[Char] = {
     val encoder = charset.newEncoder
-    var result = Set[Char]()
-    for (c <- (Char.MinValue to Char.MaxValue) if encoder.canEncode(c)) {
-      result += c
-    }
+    val charRange = (Char.MinValue to Char.MaxValue)
+    charRange.filter(encoder.canEncode(_))
+  }
+
+  def randomChar(): Char = {
+    var result: Char = '.'
+    do {
+      result = allChars(Random.nextInt(allChars.size))
+    } while (forbiddenChars(result))
     result
   }
 
-  private def randomChar(chars: Set[Char]): Char = {
-    randomChar(chars.toVector)
+  def randomString(maxSize: Int, quote: Char, qProb: Double): String = {
+    val cellSize = Random.nextInt(maxSize)
+    val cell = Seq.fill(cellSize)(randomChar()).mkString
+    if (math.random < qProb) quote + cell + quote
+    else cell
   }
 
-  private def randomChar(chars: CharList): Char = {
-    val n = Random.nextInt(chars.size)
-    chars(n)
-  }
-
-  private def randomData(chars: CharList, quote: Char): Data = {
-
-    val rows = Random.nextInt(maxRowCount)
-    val cols = Random.nextInt(maxColCount)
-    val charSeq = chars.toVector
-
-    def randomCell(quoteProb: Double): String = {
-      val cellSize = Random.nextInt(maxCellSize)
-      val cell = Seq.fill(cellSize)(randomChar(chars)).mkString
-      if (math.random < quoteProb) quote + cell + quote
-      else cell
-    }
-
-    Vector.fill(rows, cols)(randomCell(quoteProbability))
-  }
 }
 
