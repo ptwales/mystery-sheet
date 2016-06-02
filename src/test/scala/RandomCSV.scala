@@ -17,9 +17,9 @@ class RandomCSVGenerator extends FunSuite {
   type CharList = IndexedSeq[Char]
 
   val testsPerCharset = 15
-  val maxColCount = 32
-  val maxRowCount = 32
-  val maxCellSize = 32
+  val maxColCount = 2
+  val maxRowCount = 2
+  val maxCellSize = 2
   val quoteProb = 0.25
 
   val charsetsToTest = Seq("UTF-8").map(Charset.forName(_))
