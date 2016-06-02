@@ -18,7 +18,7 @@ class TestCSVTable extends FunSuite {
 
   test("Manually pass csv string") {
     val csv = "1,2,3\n,a,b,c"
-    val sheet = CSVSheet(csv)
+    val sheet = CSVSheet.fromText(csv)
     assert(sheet.rows.size == 2)
     assert(sheet.rows(0).size == 3)
   }

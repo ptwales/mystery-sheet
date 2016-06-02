@@ -2,9 +2,7 @@ package com.ptwales.sheets
 
 import scala.util.{Try, Success, Failure}
 import scala.collection.JavaConverters._
-
-import java.nio.file.Path
-import java.net.URL
+import scala.io.Source
 
 import org.apache.commons.csv.{CSVParser, CSVFormat, CSVRecord}
 
@@ -45,37 +43,35 @@ object CSVSheet {
     *
     * Assumes comma as column separator and LF as row separator
     */
-  def apply(text: String): DataSheet = {
-    apply(text, defaultColSep, defaultRowSep)
-  }
+//  def apply(text: String): DataSheet = {
+//    apply(text, defaultColSep, defaultRowSep)
+//  }
+//
+//  def apply(text: String, colSep: Char): DataSheet = {
+//    apply(text, colSep, defaultRowSep);
+//  }
 
-  def apply(text: String, colSep: Char): DataSheet = {
-    apply(text, colSep, defaultRowSep);
-  }
-
-  def apply(text: String, colSep: Char, rowSep: Char): DataSheet = {
+  def fromText(text: String, colSep: Char = ',', rowSep: Char = '\n'): DataSheet = {
     var format = CSVFormat.DEFAULT
     format = format.withDelimiter(colSep)
-    format = format.withRecordSeparator(defaultRowSep.toString)
-    apply(text, format)
+    format = format.withRecordSeparator(rowSep.toString)
+    fromText(text, format)
   }
 
-  def apply(text: String, format: CSVFormat): DataSheet = {
+  def fromText(text: String, format: CSVFormat): DataSheet = {
     new CSVSheet(text, format)
   }
 
-  def apply(path: Path): DataSheet = {
-    apply(path, defaultColSep, defaultRowSep)
-  }
+//  def apply(path: Path): DataSheet = {
+//    apply(path, defaultColSep, defaultRowSep)
+//  }
+//
+//  def apply(path: Path, colSep: Char): DataSheet = {
+//    apply(path, colSep, defaultRowSep)
+//  }
 
-  def apply(path: Path, colSep: Char): DataSheet = {
-    apply(path, colSep, defaultRowSep)
+  def fromSource(src: Source, colSep: Char = ',', rowSep: Char = '\n'): DataSheet = {
+    val text = try src.mkString finally src.close
+    fromText(text, colSep, rowSep)
   }
-
-  def apply(path: Path, colSep: Char, rowSep: Char): DataSheet = {
-    val src = io.Source.fromFile(path.toUri)
-    val text = try src.mkString("\n") finally src.close
-    apply(text, colSep, rowSep)
-  }
-
 }
