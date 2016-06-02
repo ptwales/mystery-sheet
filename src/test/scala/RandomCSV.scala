@@ -22,60 +22,65 @@ class RandomCSVGenerator extends FunSuite {
   val maxCellSize = 32
   val quoteProb = 0.25
 
-  val charsetsToTest = Seq("UTF-8"
-  ).map(Charset.forName(_))
+  val charsetsToTest = Seq("UTF-8").map(Charset.forName(_))
 
-  for (charset <- charsetsToTest) {
-    charsetBattery(charset, 1)
-  }
+  for (charset <- charsetsToTest; i <- (1 to testsPerCharset)) {
 
-  private def charsetBattery(charset: Charset, times: Int): Unit = {
+    val tg = TextGenerator.withOmissions(charset)
+    val name = tg.charset.displayName
 
-    for (i <- (1 to testsPerCharset)) {
-      val tg = new TextGenerator(charset)
-      testCharset(tg)
+    val quote = '"' 
+
+    val row = tg.randomChar
+    tg.forbidden += row
+
+    val col = tg.randomChar
+    tg.forbidden += col
+
+    val rowCount = Random.nextInt(maxRowCount)
+    val colCount = Random.nextInt(maxColCount)
+
+    val data = Vector.fill(rowCount, colCount)(
+      tg.randomString(maxCellSize, quote, quoteProb))
+
+    val rows = data.map(_.mkString(col.toString))
+    val text = rows.mkString(row.toString)
+    val lines = text.split(System.lineSeparator).toVector
+
+    test(s"Test $name: with c=`$col`, r=`$row`, q=`$quote`") {
+      val dest = Paths.get(name + ".csv")
+      try {
+        val written = Files.write(dest, lines.asJava, tg.charset)
+        val sheet: DataSheet = CSVSheet(written, col, row)
+        compareSheetToData(sheet, data)
+      } finally {
+        Files.delete(dest)
+      }
     }
   }
 
-  private def testCharset(tg: TextGenerator): Unit = {
+  private def compareSheetToData(sheet: DataSheet, data: Data): Unit = {
+    assert(sheet.rows.size == data.size)
+    for (r <- (0 until data.size)) {
 
-      val name = tg.charset.displayName
+      val drow = data(r)
+      val srow = sheet.rowAt(r)
+      assert(srow.size == drow.size)
 
-      val quote = '"' 
-      tg.forbiddenChars += quote
-
-      val row = tg.randomChar
-      tg.forbiddenChars += row
-
-      val col = tg.randomChar
-      tg.forbiddenChars += col
-
-      val rowCount = Random.nextInt(maxRowCount)
-      val colCount = Random.nextInt(maxColCount)
-
-      val data = Vector.fill(rowCount, colCount)(
-        tg.randomString(maxCellSize, quote, quoteProb))
-
-      val rows = data.map(_.mkString(col.toString))
-      val text = rows.mkString(row.toString)
-      val lines = text.split(System.lineSeparator).toVector
-
-      test(s"Test $name: with c=`$col`, r=`$row`, q=`$quote`") {
-        val dest = Paths.get(name + ".csv")
-        try {
-          val written = Files.write(dest, lines.asJava, tg.charset)
-          val sheet: DataSheet = CSVSheet(written, col, row)
-        } finally {
-          Files.delete(dest)
+      for (c <- (0 until srow.size)) {
+        srow(c) match {
+          case Some(x) => assert(x == drow(c))
+          case None => assert(drow(c) == "")
         }
       }
+    }
   }
 }
 
 class TextGenerator(cs: Charset) {
 
   val charset: Charset = cs
-  var forbiddenChars: Set[Char] = Set[Char]()
+  var forbidden: Set[Char] = Set[Char]()
 
   val allChars: IndexedSeq[Char] = {
     val encoder = charset.newEncoder
@@ -87,16 +92,30 @@ class TextGenerator(cs: Charset) {
     var result: Char = '.'
     do {
       result = allChars(Random.nextInt(allChars.size))
-    } while (forbiddenChars(result))
+    } while (forbidden(result))
     result
   }
 
-  def randomString(maxSize: Int, quote: Char, qProb: Double): String = {
-    val cellSize = Random.nextInt(maxSize)
-    val cell = Seq.fill(cellSize)(randomChar()).mkString
-    if (math.random < qProb) quote + cell + quote
-    else cell
+  def randomString(maxSize: Int, q: Char, qp: Double): String = {
+    val size = Random.nextInt(maxSize)
+    val s = Seq.fill(size)(randomChar()).mkString
+    if (math.random < qp) q + s + q
+    else s
   }
 
 }
 
+object TextGenerator {
+
+  def apply(cs: Charset): TextGenerator = new TextGenerator(cs)
+
+  def withOmissions(cs: Charset, om: Iterable[Char]): TextGenerator = {
+    val result = new TextGenerator(cs)
+    result.forbidden ++= om
+    result
+  }
+
+  def withOmissions(cs: Charset, om: Char*): TextGenerator = {
+    withOmissions(cs, om)
+  }
+}
