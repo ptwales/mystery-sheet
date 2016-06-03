@@ -8,7 +8,7 @@ import org.apache.commons.csv.{CSVParser, CSVFormat, CSVRecord}
 
 /** Implementation of [[DataSheet]] for csv or any character delimited files.
   *
-  * Later will wrap Apache Commons CSV class.
+  * Wrapper for Apache Commons CSVFormat file.
   */
 private class CSVSheet(text: String, format: CSVFormat) 
 extends DataSheet {
@@ -37,19 +37,15 @@ extends DataSheet {
 object CSVSheet {
 
   val defaultColSep: Char = ','
-  val defaultRowSep: String = System.lineSeparator
 
   /** Create a normal csv file.
     *
     * Assumes comma as column separator and LF as row separator
     */
 
-  def fromText(text: String,
-      colSep: Char=defaultColSep,
-      rowSep: String=defaultRowSep): DataSheet = {
+  def fromText(text: String, colSep: Char=defaultColSep): DataSheet = {
     var format = CSVFormat.DEFAULT
     format = format.withDelimiter(colSep)
-    format = format.withRecordSeparator(rowSep)
     fromText(text, format)
   }
 
@@ -57,10 +53,8 @@ object CSVSheet {
     new CSVSheet(text, format)
   }
 
-  def fromSource(src: Source,
-      colSep: Char=defaultColSep,
-      rowSep: String=defaultRowSep): DataSheet = {
+  def fromSource(src: Source, colSep: Char=defaultColSep): DataSheet = {
     val text = try src.mkString finally src.close
-    fromText(text, colSep, rowSep)
+    fromText(text, colSep)
   }
 }

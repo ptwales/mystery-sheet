@@ -25,11 +25,25 @@ class TestCSVTable extends FunSuite {
 
   test("Manually pass csv string with custom col seps") {
     val csv = "1+2+3\n+a+b+c"
-    val sheet = CSVSheet.fromText(csv, '+')
+    val sheet = CSVSheet.fromText(csv, colSep='+')
     assert(sheet.rows.size == 2)
     assert(sheet.rows(0).size == 3)
   }
 
+/* PROBLEM FOUND: 
+ *  CSVFormat.withRecordSeparator only works for printing not parsing.
+ *  No custom rowSeparators allowed any more.
+ *
+ * See:
+ *  https://commons.apache.org/proper/commons-csv/apidocs/org/apache/commons/csv/CSVFormat.html#withRecordSeparator(java.lang.String)
+ *
+ *  test("Manually pass csv string with custom row seps") {
+ *    val csv = "1,2,3+,a,b,c"
+ *    val sheet = CSVSheet.fromText(csv, rowSep="+")
+ *    assert(sheet.rows.size == 2)
+ *    assert(sheet.rows(0).size == 3)
+ *  }
+ */
 }
 
 @RunWith(classOf[JUnitRunner])

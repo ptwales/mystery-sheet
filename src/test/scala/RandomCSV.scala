@@ -16,10 +16,10 @@ class RandomCSVGenerator extends FunSuite {
 
   type Data = Vector[Vector[String]]
 
-  val testsPerCharset = 15
+  val testsPerCharset = 3
   val maxColCount = 4
   val maxRowCount = 4
-  val maxCellSize = 4
+  val maxCellSize = 10
 
   val charsetsToTest = Seq("UTF-8").map(Charset.forName(_))
 
@@ -29,16 +29,13 @@ class RandomCSVGenerator extends FunSuite {
     val name = tg.charset.displayName
     tg.forbidden += '"'
 
-    val row = tg.randomChar.toString
-    tg.forbidden ++= row
-
     val col = tg.randomChar
     tg.forbidden += col
 
     val rowCount = randomSize(maxRowCount)
     val colCount = randomSize(maxColCount)
 
-    val testCase = CSVTestCase(charset, colCount, rowCount, col, row)
+    val testCase = CSVTestCase(charset, colCount, rowCount, col)
     val testData = testCase.createData(tg)
 
     rawTextTest(testData)
@@ -48,7 +45,7 @@ class RandomCSVGenerator extends FunSuite {
   def rawTextTest(testData: CSVTestData): Unit = {
     val testCase = testData.testCase
     test("Raw Test: " + testData.name) {
-      val sheet = CSVSheet.fromText(testData.text, testCase.colSep, testCase.rowSep)
+      val sheet = CSVSheet.fromText(testData.text, testCase.colSep)
       DataChecker.check(sheet, testData.data)
     }
   }
@@ -61,7 +58,7 @@ class RandomCSVGenerator extends FunSuite {
       try {
         val written = Files.write(dest, testData.lines.asJava, charset)
         val src = io.Source.fromURL(written.toUri.toURL)
-        val sheet = CSVSheet.fromSource(src, testCase.colSep, testCase.rowSep)
+        val sheet = CSVSheet.fromSource(src, testCase.colSep)
         DataChecker.check(sheet, testData.data)
       } finally {
         Files.delete(dest)
@@ -73,13 +70,9 @@ class RandomCSVGenerator extends FunSuite {
     Random.nextInt(max - 1) + 1
   }
 
-  case class CSVTestCase(charset: Charset, 
-    colCount: Int, rowCount: Int,
-    colSep: Char, rowSep: String) {
-
+  case class CSVTestCase(charset: Charset, colCount: Int, rowCount: Int, colSep: Char) {
     def createData(tg: TextGenerator): CSVTestData = {
       tg.forbidden += colSep
-      tg.forbidden ++= rowSep
       val data = Vector.fill(rowCount, colCount)(tg.randomString(maxCellSize))
       CSVTestData(this, data)
     }
@@ -89,7 +82,7 @@ class RandomCSVGenerator extends FunSuite {
 
     lazy val text: String = {
       val rows = data.map(_.mkString(testCase.colSep.toString))
-      rows.mkString(testCase.rowSep)
+      rows.mkString(System.lineSeparator)
     }
 
     lazy val lines: Vector[String] = {
@@ -98,8 +91,9 @@ class RandomCSVGenerator extends FunSuite {
 
     lazy val name: String = {
       val csName = testCase.charset.displayName
-      s"charset=$csName rows=${testCase.rowCount} cols=${testCase.colCount} " +
-      s"c=`${testCase.colSep}' r=`${testCase.rowSep}'"
+      s"charset=$csName " +
+      s"rows=${testCase.rowCount} cols=${testCase.colCount} " +
+      s"c=`${testCase.colSep}'"
     }
   }
   
@@ -108,7 +102,7 @@ class RandomCSVGenerator extends FunSuite {
     def check(sheet: DataSheet, data: Data): Unit = {
 
       assert(sheet.rows.size == data.size,
-        s"First rows, sheet=${sheet.head} data=${data.head}")
+        s"First rows, sheet=${sheet.rows.head} data=${data.head}")
 
       for (r <- (0 until data.size)) {
 
@@ -163,7 +157,7 @@ class TextGenerator(cs: Charset) {
   }
 
   def randomString(maxSize: Int): String = {
-    val size = Random.nextInt(maxSize)
+    val size = Random.nextInt(maxSize - 1) + 1
     Seq.fill(size)(randomChar()).mkString
   }
 
