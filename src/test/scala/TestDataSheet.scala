@@ -16,9 +16,16 @@ object TableLoader {
 @RunWith(classOf[JUnitRunner])
 class TestCSVTable extends FunSuite {
 
-  test("Manually pass csv string") {
+  test("Manually pass csv string with defaults") {
     val csv = "1,2,3\n,a,b,c"
     val sheet = CSVSheet.fromText(csv)
+    assert(sheet.rows.size == 2)
+    assert(sheet.rows(0).size == 3)
+  }
+
+  test("Manually pass csv string with custom col seps") {
+    val csv = "1+2+3\n+a+b+c"
+    val sheet = CSVSheet.fromText(csv, '+')
     assert(sheet.rows.size == 2)
     assert(sheet.rows(0).size == 3)
   }

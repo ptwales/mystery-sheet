@@ -10,11 +10,11 @@ import org.scalatest.FunSuite
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
+
 @RunWith(classOf[JUnitRunner])
 class RandomCSVGenerator extends FunSuite {
 
   type Data = Vector[Vector[String]]
-  type CharList = IndexedSeq[Char]
 
   val testsPerCharset = 15
   val maxColCount = 4
@@ -29,8 +29,8 @@ class RandomCSVGenerator extends FunSuite {
     val name = tg.charset.displayName
     tg.forbidden += '"'
 
-    val row = tg.randomChar
-    tg.forbidden += row
+    val row = tg.randomChar.toString
+    tg.forbidden ++= row
 
     val col = tg.randomChar
     tg.forbidden += col
@@ -38,58 +38,104 @@ class RandomCSVGenerator extends FunSuite {
     val rowCount = randomSize(maxRowCount)
     val colCount = randomSize(maxColCount)
 
-    val data = Vector.fill(rowCount, colCount)(tg.randomString(maxCellSize))
-      
+    val testCase = CSVTestCase(charset, colCount, rowCount, col, row)
+    val testData = testCase.createData(tg)
 
-    val rows = data.map(_.mkString(col.toString))
-    val text = rows.mkString(row.toString)
-    val lines = text.split(System.lineSeparator).toVector
+    rawTextTest(testData)
+    fileReadTest(testData)
+  }
 
-    test(s"charset=$name rows=$rowCount cols=$colCount c=`$col' r=`$row'") {
-      val dest = Paths.get(name + ".csv")
+  def rawTextTest(testData: CSVTestData): Unit = {
+    val testCase = testData.testCase
+    test("Raw Test: " + testData.name) {
+      val sheet = CSVSheet.fromText(testData.text, testCase.colSep, testCase.rowSep)
+      DataChecker.check(sheet, testData.data)
+    }
+  }
+
+  def fileReadTest(testData: CSVTestData): Unit = {
+    val testCase = testData.testCase
+    val charset = testCase.charset
+    test("File Test: " + testData.name) {
+      val dest = Paths.get(charset.displayName + ".csv")
       try {
-        val written = Files.write(dest, lines.asJava, tg.charset)
+        val written = Files.write(dest, testData.lines.asJava, charset)
         val src = io.Source.fromURL(written.toUri.toURL)
-        val sheet: DataSheet = CSVSheet.fromSource(src, col, row)
-        compareSheetToData(sheet, data)
+        val sheet = CSVSheet.fromSource(src, testCase.colSep, testCase.rowSep)
+        DataChecker.check(sheet, testData.data)
       } finally {
         Files.delete(dest)
       }
     }
   }
 
-  def randomSize(max: Int): Int = Random.nextInt(max - 1) + 1
+  def randomSize(max: Int): Int = {
+    Random.nextInt(max - 1) + 1
+  }
 
-  def compareSheetToData(sheet: DataSheet, data: Data): Unit = {
+  case class CSVTestCase(charset: Charset, 
+    colCount: Int, rowCount: Int,
+    colSep: Char, rowSep: String) {
 
-    assert(sheet.rows.size == data.size, s"First row of data=${data.head}")
+    def createData(tg: TextGenerator): CSVTestData = {
+      tg.forbidden += colSep
+      tg.forbidden ++= rowSep
+      val data = Vector.fill(rowCount, colCount)(tg.randomString(maxCellSize))
+      CSVTestData(this, data)
+    }
+  }
 
-    for (r <- (0 until data.size)) {
+  case class CSVTestData(testCase: CSVTestCase, data: Data) {
 
-      val drow = data(r)
-      val srow = sheet.rowAt(r)
+    lazy val text: String = {
+      val rows = data.map(_.mkString(testCase.colSep.toString))
+      rows.mkString(testCase.rowSep)
+    }
 
-      assert(srow.size == drow.size, s"Row $r of data=$drow")
+    lazy val lines: Vector[String] = {
+      text.split(System.lineSeparator).toVector
+    }
 
-      for (c <- (0 until srow.size)) {
-        checkCell(srow(c), drow(c))
+    lazy val name: String = {
+      val csName = testCase.charset.displayName
+      s"charset=$csName rows=${testCase.rowCount} cols=${testCase.colCount} " +
+      s"c=`${testCase.colSep}' r=`${testCase.rowSep}'"
+    }
+  }
+  
+  object DataChecker {
+
+    def check(sheet: DataSheet, data: Data): Unit = {
+
+      assert(sheet.rows.size == data.size, s"First row of data=${data.head}")
+
+      for (r <- (0 until data.size)) {
+
+        val drow = data(r)
+        val srow = sheet.rowAt(r)
+
+        assert(srow.size == drow.size, s"Row $r of data=$drow")
+
+        for (c <- (0 until srow.size)) {
+          checkCell(srow(c), drow(c))
+        }
       }
     }
-  }
 
-  def checkCell(c: Option[Any], d: String): Unit = {
-    c match {
-      case Some(x) => checkValue(x.toString, d)
-      case None => assertEmpty(d)
+    def checkCell(c: Option[Any], d: String): Unit = {
+      c match {
+        case Some(x) => checkValue(x.toString, d)
+        case None => assertEmpty(d)
+      }
     }
-  }
 
-  def assertEmpty(s: String): Unit = {
-    checkValue("", s)
-  }
+    def assertEmpty(s: String): Unit = {
+      checkValue("", s)
+    }
 
-  def checkValue(c: String, s: String): Unit = {
-    assert(c == s)
+    def checkValue(c: String, s: String): Unit = {
+      assert(c == s)
+    }
   }
 }
 

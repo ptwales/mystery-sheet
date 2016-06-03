@@ -37,24 +37,19 @@ extends DataSheet {
 object CSVSheet {
 
   val defaultColSep: Char = ','
-  val defaultRowSep: Char = '\n'
+  val defaultRowSep: String = System.lineSeparator
 
   /** Create a normal csv file.
     *
     * Assumes comma as column separator and LF as row separator
     */
-//  def apply(text: String): DataSheet = {
-//    apply(text, defaultColSep, defaultRowSep)
-//  }
-//
-//  def apply(text: String, colSep: Char): DataSheet = {
-//    apply(text, colSep, defaultRowSep);
-//  }
 
-  def fromText(text: String, colSep: Char = ',', rowSep: Char = '\n'): DataSheet = {
+  def fromText(text: String,
+      colSep: Char=defaultColSep,
+      rowSep: String=defaultRowSep): DataSheet = {
     var format = CSVFormat.DEFAULT
     format = format.withDelimiter(colSep)
-    format = format.withRecordSeparator(rowSep.toString)
+    format = format.withRecordSeparator(rowSep)
     fromText(text, format)
   }
 
@@ -62,15 +57,9 @@ object CSVSheet {
     new CSVSheet(text, format)
   }
 
-//  def apply(path: Path): DataSheet = {
-//    apply(path, defaultColSep, defaultRowSep)
-//  }
-//
-//  def apply(path: Path, colSep: Char): DataSheet = {
-//    apply(path, colSep, defaultRowSep)
-//  }
-
-  def fromSource(src: Source, colSep: Char = ',', rowSep: Char = '\n'): DataSheet = {
+  def fromSource(src: Source,
+      colSep: Char=defaultColSep,
+      rowSep: String=defaultRowSep): DataSheet = {
     val text = try src.mkString finally src.close
     fromText(text, colSep, rowSep)
   }

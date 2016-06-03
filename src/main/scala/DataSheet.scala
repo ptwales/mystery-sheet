@@ -127,7 +127,7 @@ object DataSheet {
   }
 
   private def txt(delim: Char)(url: URL): DataSheet = {
-    CSVSheet.fromSource(io.Source.fromURL(url), delim, '\n')
+    CSVSheet.fromSource(io.Source.fromURL(url), colSep=delim)
   }
 
 }
