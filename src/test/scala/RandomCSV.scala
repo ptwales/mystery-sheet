@@ -107,7 +107,8 @@ class RandomCSVGenerator extends FunSuite {
 
     def check(sheet: DataSheet, data: Data): Unit = {
 
-      assert(sheet.rows.size == data.size, s"First row of data=${data.head}")
+      assert(sheet.rows.size == data.size,
+        s"First rows, sheet=${sheet.head} data=${data.head}")
 
       for (r <- (0 until data.size)) {
 
