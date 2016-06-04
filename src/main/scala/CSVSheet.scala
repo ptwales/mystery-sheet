@@ -36,25 +36,73 @@ extends DataSheet {
   */
 object CSVSheet {
 
+  /** Assumed column separator is the comma. */
   val defaultColSep: Char = ','
 
-  /** Create a normal csv file.
-    *
-    * Assumes comma as column separator and LF as row separator
-    */
+  /** Assumed quote character is the double quote. */
+  val defaultQuote: Char = '"'
 
-  def fromText(text: String, colSep: Char=defaultColSep): DataSheet = {
-    var format = CSVFormat.DEFAULT
-    format = format.withDelimiter(colSep)
+  /** Create a new [[DataSheet]] from a string with given settings.
+    *
+    * @param  text    Raw CSV text.
+    * @param  colSep  Charater used to separate columns.
+    * @param  quote   Character used to quote fields.
+    * @returns  A new [[DataSheet]].
+    */
+  def fromText(text: String, colSep: Char=defaultColSep, 
+               quote: Char=defaultQuote): DataSheet = {
+    val format = makeCSVFormat(colSep, quote)
     fromText(text, format)
   }
 
+  /** Create a new [[DataSheet]] using a predefined [[CSVFormat]].
+    *
+    * @param  text    Raw CSV text.
+    * @param  format  [[CSVFormat]] from apache.commons.csv.
+    * @returns  A new [[DataSheet]].
+    */
   def fromText(text: String, format: CSVFormat): DataSheet = {
     new CSVSheet(text, format)
   }
 
-  def fromSource(src: Source, colSep: Char=defaultColSep): DataSheet = {
+  /** Create a new [[DataSheet]] using a [[scala.io.Source]] object.
+    *
+    * This should be replaced with the Java equivalent for better interop with
+    * java clients and according to the maintainer scala.io.Source isn't high
+    * quality.
+    *
+    * @param  src     Source of CSV data.
+    * @param  colSep  Charater used to separate columns.
+    * @param  quote   Character used to quote fields.
+    * @returns  A new [[DataSheet]].
+    */
+  def fromSource(src: Source, colSep: Char=defaultColSep,
+                 quote: Char=defaultQuote): DataSheet = {
+    val format = makeCSVFormat(colSep, quote)
+    fromSource(src, format)
+  }
+
+  /** Create a new [[DataSheet]] using a [[scala.io.Source]] object and a
+    * predifined [[CSVFormat]].
+    *
+    * This should be replaced with the Java equivalent for better interop with
+    * java clients and according to the maintainer scala.io.Source isn't high
+    * quality.
+    *
+    * @param  src     Source of CSV data.
+    * @param  format  [[CSVFormat]] from apache.commons.csv.
+    * @returns  A new [[DataSheet]].
+    */
+  def fromSource(src: Source, format: CSVFormat): DataSheet = {
     val text = try src.mkString finally src.close
-    fromText(text, colSep)
+    fromText(text, format)
+  }
+
+  /** Centralized location to create a [[CSVFormat]]. */
+  private def makeCSVFormat(colSep: Char, quote: Char): CSVFormat = {
+    var format = CSVFormat.DEFAULT
+    format = format.withDelimiter(colSep)
+    format = format.withQuote(quote)
+    format
   }
 }
