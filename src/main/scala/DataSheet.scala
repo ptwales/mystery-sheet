@@ -13,7 +13,6 @@ import org.apache.poi.ss.usermodel.{Workbook, Sheet}
   *
   * DataSheet unifies the apache poi Sheet object with other common 
   * datasheets to give a simplified representation of the data.
-  *
   */
 trait DataSheet {
 
