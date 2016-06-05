@@ -196,17 +196,22 @@ class RandomCSVGenerator extends FunSuite {
 
     def checkCell(c: Option[Any], d: String): Unit = {
       c match {
-        case Some(x) => checkValue(x.toString, d)
+        case Some(x) => checkValue(x, d)
         case None => assertEmpty(d)
       }
     }
 
-    def assertEmpty(s: String): Unit = {
-      checkValue("", s)
+    def assertEmpty(d: String): Unit = {
+      checkValue("", d)
     }
 
-    def checkValue(c: String, s: String): Unit = {
-      assert(c == s)
+    def checkValue(c: Any, d: String): Unit = {
+      c match {
+        case s: String => assert(s == d)
+        case i: Int => assert(i == d.toInt)
+        case n: Double => assert(n == d.toDouble)
+        case _ => fail("Unsupported data type")
+      }
     }
   }
 }

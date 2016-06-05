@@ -17,22 +17,30 @@ object TableLoader {
 class TestCSVTable extends FunSuite {
 
   test("Manually pass csv string with defaults") {
-    val csv = "1,2,3\n,a,b,c"
+    val csv = "1,2,3\na,b,c"
     val sheet = CSVSheet.fromText(csv)
     assert(sheet.rows.size == 2)
-    assert(sheet.rows(0).size == 3)
+    assert(sheet(0).size == 3)
   }
 
   test("Manually pass csv string with custom col seps") {
-    val csv = "1+2+3\n+a+b+c"
+    val csv = "1+2+3\na+b+c"
     val sheet = CSVSheet.fromText(csv, colSep='+')
     assert(sheet.rows.size == 2)
-    assert(sheet.rows(0).size == 3)
+    assert(sheet(0).size == 3)
+  }
+
+  test("Manually pass csv string with leading zeroes") {
+    val csv = "01,02,03\na,b,c"
+    val sheet = CSVSheet.fromText(csv)
+    assert(sheet(0)(0) == Some(1))
+    assert(sheet(0)(1) == Some(2))
   }
 
 /* PROBLEM FOUND: 
  *  CSVFormat.withRecordSeparator only works for printing not parsing.
- *  No custom rowSeparators allowed any more.
+ *  No custom rowSeparators allowed any more. All row separators MUST be
+ *  newlines characters. Perhaps I can work around without using CSVFormat.
  *
  * See:
  *  https://commons.apache.org/proper/commons-csv/apidocs/org/apache/commons/csv/CSVFormat.html#withRecordSeparator(java.lang.String)
