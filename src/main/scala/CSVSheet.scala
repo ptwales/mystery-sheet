@@ -13,8 +13,16 @@ import org.apache.commons.csv.{CSVParser, CSVFormat, CSVRecord}
 private class CSVSheet(text: String, format: CSVFormat) 
 extends DataSheet {
 
+  /** Returns new a parser for this csv file
+    *
+    * Allows direct access to the CSVParser but you should probably just use
+    * apache commons csv yourself.
+    */
+  def parser(): CSVParser = {
+    CSVParser.parse(text, format)
+  }
+
   val rows: Table = {
-    val parser = CSVParser.parse(text, format)
     val lines = parser.getRecords.asScala
     lines.map(readRecord _).toVector
   }
@@ -25,7 +33,7 @@ extends DataSheet {
 
   private def cellOf(el: String): Cell = {
     if (el.isEmpty) None
-    else Some(Try(el.toInt).getOrElse(el))
+    else Some(el)
   }
 }
 
@@ -100,9 +108,9 @@ object CSVSheet {
 
   /** Centralized location to create a [[CSVFormat]]. */
   private def makeCSVFormat(colSep: Char, quote: Char): CSVFormat = {
-    var format = CSVFormat.DEFAULT
-    format = format.withDelimiter(colSep)
-    format = format.withQuote(quote)
-    format
+    CSVFormat.DEFAULT
+      .withQuote(null)
+      .withDelimiter(colSep)
+      .withQuote(quote)
   }
 }

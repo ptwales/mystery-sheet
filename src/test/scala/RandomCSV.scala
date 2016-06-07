@@ -35,19 +35,17 @@ class RandomCSVGenerator extends FunSuite {
 
     test("Raw Test: " + testCase.name) {
       val sheet = CSVSheet.fromText(t.text, testCase.colSep)
-      DataChecker.check(sheet, t.data)
+      t.check(sheet)
     }
 
     test("File Test: " + testCase.name) {
-
-      val dest = Paths.get(testCase.name + ".csv")
-
+      val safeName = testCase.name.replace("/", "SLASH")
+      val dest = Paths.get(safeName + ".csv")
       try {
         val written = Files.write(dest, t.lines.asJava, charset)
         val src = io.Source.fromURL(written.toUri.toURL)
         val sheet = CSVSheet.fromSource(src, testCase.colSep)
-        DataChecker.check(sheet, t.data)
-
+        t.check(sheet)
       } finally {
         Files.delete(dest)
       }
@@ -58,24 +56,39 @@ class RandomCSVGenerator extends FunSuite {
     Random.nextInt(max - 1) + 1
   }
 
-  /** Contains test conditons for a random CSV. */
-  case class CSVTestCase(charset: Charset, colCount: Int, rowCount: Int, colSep: Char) {
+  /** Contains test conditons for a random CSV test. */
+  case class CSVTestCase(charset: Charset, 
+                         colCount: Int, rowCount: Int, 
+                         colSep: Char, quote: Char) {
 
     /** Returns a [[CSVTestData]] object. */
     def createData(maxCellSize: Int): CSVTestData = {
-      val tg = TextGenerator(charset)
-      tg.forbidden += colSep
-      tg.forbidden += '"'  // TODO: return quote as a test option
-      val data = Vector.fill(rowCount, colCount)(tg.randomString(maxCellSize))
+      val data = Vector.fill(rowCount, colCount)(generateRandomCell(0.25))
       CSVTestData(this, data)
     }
 
     /** Formatted string showing test conditions */
     lazy val name: String = {
-      s"charset=${charset.displayName} " +
-      s"rows=${rowCount} cols=${colCount} " +
-      s"c=`${colSep}'"
+      s"charset:${charset.displayName}_" +
+      s"rows:${rowCount}_cols:${colCount}_" +
+      s"c:`${colSep}`_q:`${quote}`"
     }
+
+    /** Generates random text without column separator or quote characters. */
+    private val textGen: TextGenerator = {
+      val tg = TextGenerator(charset)
+      tg.forbidden += colSep
+      tg.forbidden += quote
+      tg
+    }
+
+    /** Generates a random cell value which might be quoted. */
+    private def generateRandomCell(qProb: Double): String = {
+      val s = textGen.randomString(maxCellSize)
+      if (math.random < qProb) quote + s + quote
+      else s
+    }
+
   }
 
   /** Companion object for [[CSVTestCase]]. */
@@ -86,9 +99,10 @@ class RandomCSVGenerator extends FunSuite {
       val colCount = randomSize(maxCol)
       val rowCount = randomSize(maxRow)
       val tg = TextGenerator(charset)
-      tg.forbidden += '"'  // TODO: return quote as a test option
       val colSep = tg.randomChar
-      new CSVTestCase(charset, colCount, rowCount, colSep)
+      tg.forbidden += colSep
+      val quote = tg.randomChar
+      new CSVTestCase(charset, colCount, rowCount, colSep, quote)
     }
   }
   
@@ -103,6 +117,44 @@ class RandomCSVGenerator extends FunSuite {
     /** The random data as a string */
     lazy val text: String = {
       lines.mkString(System.lineSeparator)
+    }
+
+    def check(sheet: DataSheet): Unit = {
+
+      assert(sheet.rows.size == data.size,
+        s"First rows, sheet=${sheet.rows.head} data=${data.head}")
+
+      for (r <- (0 until data.size)) {
+
+        val drow = data(r)
+        val srow = sheet.rowAt(r)
+
+        assert(srow.size == drow.size, s"Row $r of data=$drow")
+
+        for (c <- (0 until srow.size)) {
+          checkCell(srow(c), drow(c))
+        }
+      }
+    }
+
+    private def checkCell(c: Option[Any], d: String): Unit = {
+      c match {
+        case Some(x) => checkValue(x, d)
+        case None => assertEmpty(d)
+      }
+    }
+
+    private def assertEmpty(d: String): Unit = {
+      checkValue("", d)
+    }
+
+    private def checkValue(c: Any, d: String): Unit = {
+      c match {
+        case s: String => assert(s == d)
+        case i: Int => assert(i == d.toInt)
+        case n: Double => assert(n == d.toDouble)
+        case _ => fail("Unsupported data type")
+      }
     }
   }
 
@@ -174,44 +226,4 @@ class RandomCSVGenerator extends FunSuite {
     def apply(cs: Charset): TextGenerator = new TextGenerator(cs)
   }
 
-  object DataChecker {
-
-    def check(sheet: DataSheet, data: Data): Unit = {
-
-      assert(sheet.rows.size == data.size,
-        s"First rows, sheet=${sheet.rows.head} data=${data.head}")
-
-      for (r <- (0 until data.size)) {
-
-        val drow = data(r)
-        val srow = sheet.rowAt(r)
-
-        assert(srow.size == drow.size, s"Row $r of data=$drow")
-
-        for (c <- (0 until srow.size)) {
-          checkCell(srow(c), drow(c))
-        }
-      }
-    }
-
-    def checkCell(c: Option[Any], d: String): Unit = {
-      c match {
-        case Some(x) => checkValue(x, d)
-        case None => assertEmpty(d)
-      }
-    }
-
-    def assertEmpty(d: String): Unit = {
-      checkValue("", d)
-    }
-
-    def checkValue(c: Any, d: String): Unit = {
-      c match {
-        case s: String => assert(s == d)
-        case i: Int => assert(i == d.toInt)
-        case n: Double => assert(n == d.toDouble)
-        case _ => fail("Unsupported data type")
-      }
-    }
-  }
 }
