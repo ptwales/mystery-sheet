@@ -30,7 +30,7 @@ class TestDataSheet extends FunSuite {
       var r = 0
       table.rows foreach {
         (row) => {
-          assert(row(0).get === (r + 1).toString)
+          assert(row(0).get === (r + 1))
           assert(row(1).get === chars(r).toString)
           r += 1
         }
