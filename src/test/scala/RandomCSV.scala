@@ -14,9 +14,9 @@ import org.scalatest.junit.JUnitRunner
 class RandomCSV extends FunSuite {
 
   val testsPerCharset = 10
-  val maxColCount = 10
-  val maxRowCount = 10
-  val maxCellSize = 10
+  val maxColCount     = 10
+  val maxRowCount     = 10
+  val maxCellSize     = 10
 
   val charsetsToTest = Seq("UTF-8").map(Charset.forName(_))
 
@@ -24,7 +24,11 @@ class RandomCSV extends FunSuite {
   val tests = for { 
     charset <- charsetsToTest.toStream
     i <- (1 to testsPerCharset)
-  } yield CSVTestCase(charset, maxColCount, maxRowCount, maxCellSize)
+  } yield CSVTestCase(
+    charset,
+    Random.nextInt(maxColCount) + 1,
+    Random.nextInt(maxRowCount) + 1,
+    maxCellSize)
     
  
 
@@ -33,7 +37,10 @@ class RandomCSV extends FunSuite {
     val charset = testCase.charset
 
     test("Raw Test: " + testCase.name) {
-      val sheet = CSVSheet.fromText(testCase.text, testCase.colSep)
+      val sheet = CSVSheet.fromText(
+        testCase.text,
+        testCase.colSep,
+        testCase.quote)
       testCase.check(sheet)
     }
 
@@ -42,8 +49,10 @@ class RandomCSV extends FunSuite {
       val dest = Paths.get(safeName + ".csv")
       try {
         val written = Files.write(dest, testCase.lines.asJava, charset)
-        val src = io.Source.fromURL(written.toUri.toURL)
-        val sheet = CSVSheet.fromSource(src, testCase.colSep)
+        val sheet = CSVSheet.fromSource(
+          io.Source.fromFile(written.toFile),
+          testCase.colSep,
+          testCase.quote)
         testCase.check(sheet)
       } finally {
         Files.delete(dest)
@@ -125,11 +134,14 @@ case class CSVTestCase(
       assert(srow.size == drow.size, s"Row $r of data=$drow")
 
       for (c <- (0 until srow.size)) {
-        assert(srow(c) == drow(c))
+        assert(srow(c) === stripQuote(drow(c)))
       }
     }
   }
 
+  private def stripQuote(cell: Cell): Cell = {
+    cell.dropWhile(_ == quote).takeWhile(_ != quote)
+  }
 }
 
 /** Companion object for [[CSVTestCase]].
