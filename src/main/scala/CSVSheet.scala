@@ -28,12 +28,7 @@ extends DataSheet {
   }
 
   private def readRecord(line: CSVRecord): Row = {
-    (0 until line.size) map { i => cellOf(line.get(i)) }
-  }
-
-  private def cellOf(el: String): Cell = {
-    if (el.isEmpty) None
-    else Some(el)
+    (0 until line.size).map(line.get(_))
   }
 }
 

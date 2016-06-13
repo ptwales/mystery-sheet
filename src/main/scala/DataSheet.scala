@@ -76,7 +76,7 @@ trait DataSheet {
 
   private def cellAt(colIndex: Int)(row: Row): Cell = {
     if (row.isDefinedAt(colIndex)) row(colIndex)
-    else None
+    else ""
   }
 }
 

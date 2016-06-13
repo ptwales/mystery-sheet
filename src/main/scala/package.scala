@@ -2,8 +2,10 @@ package com.ptwales
 
 package object sheets {
 
-  /** Representation of a cell or element.  None if blank. */
-  type Cell = Option[Any]
+  /** Representation of a cell or element.
+    * All are strings.
+    */
+  type Cell = String
 
   /** Row is usually a Vector of [[Cell]]s */
   type Row = IndexedSeq[Cell]

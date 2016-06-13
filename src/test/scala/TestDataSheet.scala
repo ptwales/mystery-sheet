@@ -18,7 +18,7 @@ object TableLoader {
 class TestDataSheet extends FunSuite {
 
   val files = Seq(".xls", ".xlsx", "-lf.csv", "-crlf.csv", "-eol.csv") map { 
-    "data-table" + _
+    "data-table/data-table" + _
   }
 
   val chars = "abcdefghijklmnopqrstuvwxyz".toList
@@ -30,8 +30,8 @@ class TestDataSheet extends FunSuite {
       var r = 0
       table.rows foreach {
         (row) => {
-          assert(row(0).get === (r + 1))
-          assert(row(1).get === chars(r).toString)
+          assert(row(0).toDouble.toInt == r + 1)
+          assert(chars(r).toString     == row(1))
           r += 1
         }
       }
@@ -53,7 +53,7 @@ class TestTrailing extends FunSuite {
     "two-trailing.xls",
     "one-trailing.xlsx",
     "two-trailing.xlsx"
-  )
+  ) map { "trailing/" + _ }
 
   for (file <- files) {
     test(s"trailing rows are trimmed from: $file") {

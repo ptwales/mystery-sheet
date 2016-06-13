@@ -68,7 +68,7 @@ case class CSVTestCase(
   lazy val name: String = {
     s"charset:${charset.displayName}_" +
     s"rows:${rowCount}_cols:${colCount}_" +
-    s"c:`${colSep}`_q:`${quote}`"
+    s"c:${colSep}_q:${quote}"
   }
 
   /***************\
@@ -125,30 +125,11 @@ case class CSVTestCase(
       assert(srow.size == drow.size, s"Row $r of data=$drow")
 
       for (c <- (0 until srow.size)) {
-        checkCell(srow(c), drow(c))
+        assert(srow(c) == drow(c))
       }
     }
   }
 
-  private def checkCell(c: Option[Any], d: String): Unit = {
-    c match {
-      case Some(x) => checkValue(x, d)
-      case None => assertEmpty(d)
-    }
-  }
-
-  private def assertEmpty(d: String): Unit = {
-    checkValue("", d)
-  }
-
-  private def checkValue(c: Any, d: String): Unit = {
-    c match {
-      case s: String => assert(s == d)
-      case i: Int => assert(i == d.toInt)
-      case n: Double => assert(n == d.toDouble)
-      case _ => fail("Unsupported data type")
-    }
-  }
 }
 
 /** Companion object for [[CSVTestCase]].

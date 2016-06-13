@@ -4,8 +4,6 @@ import org.scalatest.FunSuite
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
-import java.nio.file.{Paths, Path, Files}
-
 @RunWith(classOf[JUnitRunner])
 class StringTestCSV extends FunSuite {
 
@@ -26,22 +24,22 @@ class StringTestCSV extends FunSuite {
   test("Manually pass csv string with leading zeroes") {
     val csv = "01,02,03\na,b,c"
     val sheet = CSVSheet.fromText(csv)
-    assert(sheet(0)(0) == Some("01"))
-    assert(sheet(0)(1) == Some("02"))
+    assert(sheet(0)(0) == "01")
+    assert(sheet(0)(1) == "02")
   }
 
   test("Manually pass csv with quotes to protect leading zeroes") {
     val csv = "U01U,U02U,U\"03U\na,b,c"
     val sheet = CSVSheet.fromText(csv, quote='U')
-    assert(sheet(0)(0) == Some("01"))
-    assert(sheet(0)(1) == Some("02"))
-    assert(sheet(0)(2) == Some("\"03"))
+    assert(sheet(0)(0) == "01")
+    assert(sheet(0)(1) == "02")
+    assert(sheet(0)(2) == "\"03")
   }
 
   test("Manually pass csv with quotes that contain a col sep") {
     val csv = "`hello, world`\nhello"
     val sheet = CSVSheet.fromText(csv, quote='`')
-    assert(sheet(0)(0) == Some("hello, world"))
+    assert(sheet(0)(0) == "hello, world")
   }
 
 
