@@ -5,11 +5,24 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
 import java.nio.file.{Paths, Path, Files}
+import java.net.URL
+import scala.collection.JavaConverters._
 
 object TableLoader {
-  def apply(fileName: String): DataSheet = {
+
+  def loadTable(fileName: String): DataSheet = {
     val url = getClass.getResource("/" + fileName)
     DataSheet(url)
+  }
+
+  def loadTables(folderName: String): Stream[(String, DataSheet)] = {
+    val url = getClass.getResource("/" + folderName)
+    val path = Paths.get(url.toURI)
+    val paths = Files.walk(path).iterator.asScala
+    val files = paths.filter(Files.isRegularFile(_))
+    files.map({
+        f => (f.getFileName.toString, DataSheet(f))
+      }).toStream
   }
 }
 
@@ -17,16 +30,11 @@ object TableLoader {
 @RunWith(classOf[JUnitRunner])
 class TestDataSheet extends FunSuite {
 
-  val files = Seq(".xls", ".xlsx", "-lf.csv", "-crlf.csv", "-eol.csv") map { 
-    "data-table/data-table" + _
-  }
-
   val chars = "abcdefghijklmnopqrstuvwxyz".toList
-  for (file <- files) {
+  val tables = TableLoader.loadTables("data-table")
 
+  for ((file, table) <- tables) {
     test(s"Can get values of $file") {
-
-      val table = TableLoader(file)
       var r = 0
       table.rows foreach {
         (row) => {
@@ -37,27 +45,15 @@ class TestDataSheet extends FunSuite {
       }
     }
   }
-
-  // TODO: more tests listed below
-  // test("headers can be ignored")
-
 }
 
 @RunWith(classOf[JUnitRunner])
 class TestTrailing extends FunSuite {
 
-  val files = Seq(
-    "one-trailing-nl.csv",
-    "two-trailing-nl.csv",
-    "one-trailing.xls",
-    "two-trailing.xls",
-    "one-trailing.xlsx",
-    "two-trailing.xlsx"
-  ) map { "trailing/" + _ }
-
-  for (file <- files) {
+  val tables = TableLoader.loadTables("trailing")
+  for ((file, table) <- tables) {
     test(s"trailing rows are trimmed from: $file") {
-      val table = TableLoader(file)
+      val table = TableLoader.loadTable(file)
       assert(table.rows.size == 5)
     }
   }

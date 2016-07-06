@@ -90,7 +90,15 @@ object DataSheet {
     */
   def apply(url: URL): DataSheet = {
     val ext = url.toString.split('.').last
-    Try(factory(ext)(url)).get
+    Try(factory(ext)(url)) match {
+      case Success(sheet) => sheet
+      case Failure(nsee: NoSuchElementException) => {
+        throw new UnsupportedOperationException(
+          s".$ext files are not a supported extension"
+        )
+      }
+      case Failure(e) => throw e
+    }
   }
 
   /** Returns an [[DataSheet]] from the given file path.
