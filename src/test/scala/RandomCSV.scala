@@ -20,7 +20,6 @@ class RandomCSV extends FunSuite {
 
   val charsetsToTest = Seq("UTF-8").map(Charset.forName(_))
 
-
   val tests = for { 
     charset <- charsetsToTest.toStream
     i <- (1 to testsPerCharset)
@@ -30,8 +29,6 @@ class RandomCSV extends FunSuite {
     Random.nextInt(maxRowCount) + 1,
     maxCellSize)
     
- 
-
   tests foreach { testCase =>
 
     val charset = testCase.charset
@@ -103,9 +100,9 @@ case class CSVTestCase(
     else s
   }
 
-  /**************\
+  /*************\
    Printing Data
-  \**************/
+  \*************/
 
   /** Lines of the random data */
   lazy val lines: Seq[String] = {
@@ -117,14 +114,13 @@ case class CSVTestCase(
     lines.mkString(System.lineSeparator)
   }
 
-  /****************\
+  /***************\
    Validating data
-  \****************/
+  \***************/
 
   def check(sheet: DataSheet): Unit = {
 
-    assert(sheet.rows.size == data.size,
-      s"First rows, sheet=${sheet.rows.head} data=${data.head}")
+    assert(sheet.rows.size == data.size)
 
     for (r <- (0 until data.size)) {
 
