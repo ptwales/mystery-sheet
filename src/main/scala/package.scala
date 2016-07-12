@@ -15,4 +15,15 @@ package object sheets {
 
   /** Table is an indexed sequence of Rows. */
   type Table = IndexedSeq[Row]
+
+  /** Indexes are integers. */
+  type Index = Int
+
+  /** Column headers are strings. */
+  type Field = String
+
+  /** A Header is an indexed sequence of fields. */
+  type Header = IndexedSeq[Field]
+
+  type Record = Map[Field, Cell]
 }

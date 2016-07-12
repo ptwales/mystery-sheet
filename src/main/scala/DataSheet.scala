@@ -26,7 +26,7 @@ trait DataSheet {
     * @param  rowIndex  index of the row.
     * @return the row at the provided index.
     */
-  def rowAt(rowIndex: Int): Row = rows(rowIndex)
+  def rowAt(rowIndex: Index): Row = rows(rowIndex)
 
   /** Returns the column at the given index.
     *
@@ -35,7 +35,7 @@ trait DataSheet {
     * @param  colIndex  index of the column.
     * @return the column at the given index.
     */
-  def colAt(colIndex: Int): Row = rows.map(cellAt(colIndex))
+  def colAt(colIndex: Index): Row = rows.map(cellAt(colIndex))
 
   /** Returns a subtable made from the rows of the given indexes.
     *
@@ -46,7 +46,7 @@ trait DataSheet {
     * @param  rows  Indexes of the desired rows.
     * @return a table made from the selected rows.
     */
-  def rowsAt(rowIndexes: Iterable[Int]): Table = {
+  def rowsAt(rowIndexes: Iterable[Index]): Table = {
     rowIndexes.toVector.map(rows.apply _)
   }
 
@@ -58,7 +58,7 @@ trait DataSheet {
     * @param  cols  Indexes of the desired columns.
     * @return a table made from the selected columns.
     */
-  def colsAt(colIndexes: Iterable[Int]): Table = {
+  def colsAt(colIndexes: Iterable[Index]): Table = {
     val colVec = colIndexes.toVector
     rows map { row => 
       colVec map { colIndex =>
@@ -72,9 +72,9 @@ trait DataSheet {
     * @param  rowIndex  Index of the desired row.
     * @return The row at rowIndex.
     */
-  def apply(rowIndex: Int): Row = rowAt(rowIndex)
+  def apply(rowIndex: Index): Row = rowAt(rowIndex)
 
-  private def cellAt(colIndex: Int)(row: Row): Cell = {
+  private def cellAt(colIndex: Index)(row: Row): Cell = {
     if (row.isDefinedAt(colIndex)) row(colIndex)
     else ""
   }

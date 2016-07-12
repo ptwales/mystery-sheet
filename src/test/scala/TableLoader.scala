@@ -12,6 +12,30 @@ object TableLoader {
 
   /** Loads a [[DataSheet]] from resources */
   def loadTable(fileName: String): DataSheet = {
+    val path =  "/" + fileName
+    val url = getClass.getResource(path)
+    if (url != null) DataSheet(url)
+    else throw new IllegalArgumentException(s"Cannot find file $path")
+  }
+
+  /** Returns a [[Stream]] of (file name, [[DataSheet]]) for every file in the
+    * given folder.
+    */
+  def loadTables(folderName: String): Stream[(String, DataSheet)] = {
+    val url = getClass.getResource("/" + folderName)
+    val path = Paths.get(url.toURI)
+    val paths = Files.walk(path).iterator.asScala
+    val files = paths.filter(Files.isRegularFile(_))
+    files.map({
+        f => (f.getFileName.toString, DataSheet(f))
+      }).toStream
+  }
+}
+
+class TableLoader(folder: String) {
+
+  /** Loads a [[DataSheet]] from resources */
+  def loadTable(fileName: String): DataSheet = {
     val url = getClass.getResource("/" + fileName)
     DataSheet(url)
   }
@@ -28,4 +52,5 @@ object TableLoader {
         f => (f.getFileName.toString, DataSheet(f))
       }).toStream
   }
+
 }
