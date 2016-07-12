@@ -8,31 +8,41 @@ import org.scalatest.junit.JUnitRunner
 class TestHeaderAPI extends FunSuite {
 
   val sheet = TableLoader.loadTable("headers/header-table-lf.csv")
-  val header = Seq("int", "char")
-  val table = HeadedSheet(sheet, header)
-
-  test("First row is not the header") {
-    assert(table.rowAt(0) != header)
-  }
-
-  test("Get correct indexes of fields") {
-    for ((f, i) <- header.zipWithIndex) {
-      assert(table.indexOf(f) == i)
-    }
-  }
-
-  test("Get cols by name.") {
-    val ints = table.colAt("int")
-    assert(ints == Seq(1, 2, 3, 4, 5).map(_.toString))
-    val chars = table.colAt("char")
-    assert(chars.mkString == "abcde")
-  }
-
-  test("Can get records") {
-    val rec = table.recordAt(0)
-    assert(rec("int")  == "1")
-    assert(rec("char") == "a")
-    assert(rec.keySet == header.toSet)
-  }
+  val header = Vector("int", "char")
+  val battery = new HeaderBattery(sheet, header)
+  battery.check
 }
 
+class HeaderBattery(sheet: DataSheet, header: Header) extends FunSuite {
+
+  val table = HeadedSheet(sheet, header)
+
+  def check(): Unit = {
+
+    test("First row is not the header") {
+      assert(table.rowAt(0) != header)
+    }
+
+    test("Get correct indexes of fields") {
+      for ((f, i) <- header.zipWithIndex) {
+        assert(table.indexOf(f) == i)
+      }
+    }
+
+    test("Get cols by name.") {
+      val ints = table.colAt("int")
+      for ((field, index) <- header.zipWithIndex) {
+        assert(sheet.colAt(index) == table.colAt(field))
+      }
+    }
+
+    test("Can get records") {
+      for (r <- (0 until table.rows.size); c <- (0 until header.size)) {
+        val rec = table.recordAt(r)
+        assert(rec.keySet == header.toSet)
+        assert(header.size == sheet(r).size)
+        assert(rec(header(c)) == sheet(r)(c))
+      }
+    }
+  }
+}
