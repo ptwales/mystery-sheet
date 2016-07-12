@@ -10,8 +10,7 @@ class TestHeaderAPI extends FunSuite {
   val sheet = TableLoader.loadTable("headers/header-table-lf.csv")
   val header = Vector("int", "char")
   TableLoader.loadTables("headers") foreach {
-    val battery = new HeaderBattery(_._2, header)
-    battery.check
+    (ns: (String, DataSheet)) => (new HeaderBattery(ns._2, header)).check
   }
 }
 
