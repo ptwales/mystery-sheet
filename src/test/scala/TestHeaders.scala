@@ -9,8 +9,10 @@ class TestHeaderAPI extends FunSuite {
 
   val sheet = TableLoader.loadTable("headers/header-table-lf.csv")
   val header = Vector("int", "char")
-  val battery = new HeaderBattery(sheet, header)
-  battery.check
+  TableLoader.loadTables("headers") foreach {
+    val battery = new HeaderBattery(_._2, header)
+    battery.check
+  }
 }
 
 class HeaderBattery(sheet: DataSheet, header: Header) extends FunSuite {
