@@ -7,9 +7,14 @@ import org.scalatest.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class TestHeaderAPI extends FunSuite {
 
-  val sheet = TableLoader.loadTable("headers/header-table-lf.csv")
   val header = Vector("int", "char")
-  TableLoader.loadTables("headers") foreach {
+
+  // test files with headers and without headers
+  val sheets = Seq("headers", "data-table") flatMap {
+    TableLoader.loadTables(_)
+  }
+
+  sheets foreach {
     (ns: (String, DataSheet)) => (new HeaderBattery(ns._2, header)).check
   }
 }
