@@ -16,14 +16,14 @@ import org.apache.poi.ss.usermodel.{Workbook, Sheet}
   */
 trait DataSheet {
 
-  /** The collection of values as a 2D vector */
+  /** The collection of values as a 2D vector. */
   val rows: Table
 
   /** Returns the row at the given index.
     *
     * Literally the same as indexing [[rows]]
     *
-    * @param  rowIndex  index of the row.
+    * @param  rowIndex  Index of the row.
     * @return the row at the provided index.
     */
   def rowAt(rowIndex: Index): Row = rows(rowIndex)
@@ -32,8 +32,8 @@ trait DataSheet {
     *
     * Returns a [[Column]] built from elements of the same index from [[rows]].
     *
-    * @param  colIndex  index of the column.
-    * @return the column at the given index.
+    * @param  colIndex  Index of the column.
+    * @return The column at the given index.
     */
   def colAt(colIndex: Index): Row = rows.map(cellAt(colIndex))
 
@@ -44,7 +44,7 @@ trait DataSheet {
     * row table made from the first, second and fifth rows.
     *
     * @param  rows  Indexes of the desired rows.
-    * @return a table made from the selected rows.
+    * @return A table made from the selected rows.
     */
   def rowsAt(rowIndexes: Iterable[Index]): Table = {
     rowIndexes.toVector.map(rows.apply _)
@@ -56,7 +56,7 @@ trait DataSheet {
     * the rows.  It should not transform the columns into rows.
     *
     * @param  cols  Indexes of the desired columns.
-    * @return a table made from the selected columns.
+    * @return A table made from the selected columns.
     */
   def colsAt(colIndexes: Iterable[Index]): Table = {
     val colVec = colIndexes.toVector

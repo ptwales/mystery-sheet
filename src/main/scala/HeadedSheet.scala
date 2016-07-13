@@ -25,20 +25,28 @@ trait HeadedSheet extends DataSheet {
     * Overloads [[DataSheet.colAt]].
     *
     * @param  field   The name of a the column header.
-    * @return         The column of that column header.
+    * @return         The column under the given field.
     */
   def colAt(field: Field): Row = colAt(indexOf(field))
 
   /** Return a sub table with the given headers.
     *
     * Overloads [[DataSheet.colsAt]].
+    * All given fields must be contained in the header.
     *
-    * @param  subHeader
+    * @param  subHeaders  The fields of the selected columns.
+    * @return A table made from the selected columns.
     */
-  def colsAt(subHeader: Header): Table = {
-    colsAt(subHeader.map(indexOf(_)))
+  def colsAt(subHeaders: Header): Table = {
+    colsAt(subHeaders.map(indexOf(_)))
   }
 
+  /** Return a Map where the keys are the header and the values are the
+    * cells at the given index.
+    *
+    * @param  index   Index of the record.
+    * @return         A Map of [[Field]] to [[Cell]].
+    */
   def recordAt(index: Index): Record = {
     rowAt(index).zipWithIndex.map((ci) => (header(ci._2) -> ci._1)).toMap
   }

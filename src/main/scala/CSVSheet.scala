@@ -50,7 +50,7 @@ object CSVSheet {
     * @param  text    Raw CSV text.
     * @param  colSep  Charater used to separate columns.
     * @param  quote   Character used to quote fields.
-    * @returns  A new [[DataSheet]].
+    * @return  A new [[DataSheet]].
     */
   def fromText(text: String, colSep: Char=defaultColSep, 
                quote: Char=defaultQuote): DataSheet = {
@@ -58,17 +58,17 @@ object CSVSheet {
     fromText(text, format)
   }
 
-  /** Create a new [[DataSheet]] using a predefined [[CSVFormat]].
+  /** Create a new [[DataSheet]] using a predefined CSVFormat.
     *
     * @param  text    Raw CSV text.
-    * @param  format  [[CSVFormat]] from apache.commons.csv.
-    * @returns  A new [[DataSheet]].
+    * @param  format  CSVFormat from apache.commons.csv.
+    * @return  A new [[DataSheet]].
     */
   def fromText(text: String, format: CSVFormat): DataSheet = {
     new CSVSheet(text, format)
   }
 
-  /** Create a new [[DataSheet]] using a [[scala.io.Source]] object.
+  /** Create a new [[DataSheet]] using a Source object.
     *
     * This should be replaced with the Java equivalent for better interop with
     * java clients and according to the maintainer scala.io.Source isn't high
@@ -77,7 +77,7 @@ object CSVSheet {
     * @param  src     Source of CSV data.
     * @param  colSep  Charater used to separate columns.
     * @param  quote   Character used to quote fields.
-    * @returns  A new [[DataSheet]].
+    * @return  A new [[DataSheet]].
     */
   def fromSource(src: Source, colSep: Char=defaultColSep,
                  quote: Char=defaultQuote): DataSheet = {
@@ -85,27 +85,29 @@ object CSVSheet {
     fromSource(src, format)
   }
 
-  /** Create a new [[DataSheet]] using a [[scala.io.Source]] object and a
-    * predifined [[CSVFormat]].
+  /** Create a new [[DataSheet]] using a Source object and a
+    * predifined CSVFormat.
     *
     * This should be replaced with the Java equivalent for better interop with
     * java clients and according to the maintainer scala.io.Source isn't high
     * quality.
     *
     * @param  src     Source of CSV data.
-    * @param  format  [[CSVFormat]] from apache.commons.csv.
-    * @returns  A new [[DataSheet]].
+    * @param  format  CSVFormat from apache.commons.csv.
+    * @return  A new [[DataSheet]].
     */
   def fromSource(src: Source, format: CSVFormat): DataSheet = {
     val text = try src.mkString finally src.close
     fromText(text, format)
   }
 
-  /** Centralized location to create a [[CSVFormat]]. */
+  /** Centralized location to create a CSVFormat. */
   private def makeCSVFormat(colSep: Char, quote: Char): CSVFormat = {
     CSVFormat.DEFAULT
       .withQuote(null)
       .withDelimiter(colSep)
       .withQuote(quote)
+      //.withIgnoreEmptyLines(false)
+      //.withTrim // not supported in this version of commons-csv?
   }
 }

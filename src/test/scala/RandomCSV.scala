@@ -13,7 +13,6 @@ import org.scalatest.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class RandomCSV extends FunSuite {
 
-  val testsPerCharset = 10
   val maxColCount     = 10
   val maxRowCount     = 10
   val maxCellSize     = 10
@@ -21,13 +20,10 @@ class RandomCSV extends FunSuite {
   val charsetsToTest = Seq("UTF-8").map(Charset.forName(_))
 
   val tests = for { 
-    charset <- charsetsToTest.toStream
-    i <- (1 to testsPerCharset)
-  } yield CSVTestCase(
-    charset,
-    Random.nextInt(maxColCount) + 1,
-    Random.nextInt(maxRowCount) + 1,
-    maxCellSize)
+    cs <- charsetsToTest.toStream
+    row <- (1 to maxRowCount)
+    col <- (1 to maxColCount)
+  } yield CSVTestCase(cs, row, col, maxCellSize)
     
   tests foreach { testCase =>
 
@@ -51,14 +47,16 @@ class RandomCSV extends FunSuite {
           testCase.colSep,
           testCase.quote)
         testCase.check(sheet)
-      } finally {
         Files.delete(dest)
+      } finally {
       }
     }
   }
 }
 
 /** Contains test conditons for a random CSV test.
+  * 
+  * This should be 1 case class and 4-5 objects...
   */
 case class CSVTestCase(
   charset: Charset, 
@@ -95,7 +93,10 @@ case class CSVTestCase(
 
   /** Generates a random cell value which might be quoted. */
   private def generateRandomCell(qProb: Double): String = {
-    val s = textGen.randomString(maxCellSize)
+    val s = { //prevent blank lines....
+      if (colCount > 1) textGen.randomString(maxCellSize)
+      else textGen.randomString(maxCellSize - 1) + 1
+    }
     if (math.random < qProb) quote + s + quote
     else s
   }

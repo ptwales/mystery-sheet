@@ -42,10 +42,17 @@ class StringTestCSV extends FunSuite {
     assert(sheet(0)(0) == "hello, world")
   }
 
-
   test("Can use \" as column sep") {
     val csv = "1\"2\"3\na\"b\"c"
     val sheet = CSVSheet.fromText(csv, colSep='"', quote='`')
+    assert(sheet(0)(1) == "2")
+    assert(sheet(1)(2) == "c")
+  }
+
+  test("Single column") {
+    val csv = "1\n2\n3"
+    val sheet = CSVSheet.fromText(csv, colSep='M')
+    assert(sheet.colAt(0).mkString("\n") == csv)
   }
 
 /* PROBLEM FOUND: 
