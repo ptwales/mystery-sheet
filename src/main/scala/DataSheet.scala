@@ -19,8 +19,6 @@ trait DataSheet extends Table {
   /** The collection of values as a 2D vector. */
   val rows: Table
 
-  private case class Sheet(rows: Table) extends DataSheet
-
   /** Returns the row at the given index.
     *
     * Literally the same as indexing [[rows]]
@@ -28,7 +26,9 @@ trait DataSheet extends Table {
     * @param  rowIndex  Index of the row.
     * @return the row at the provided index.
     */
-  def rowAt(rowIndex: Index): Row = rows(rowIndex)
+  def rowAt(rowIndex: Index): Row = {
+    rows(rowIndex)
+  }
 
   /** Returns the column at the given index.
     *
@@ -37,7 +37,9 @@ trait DataSheet extends Table {
     * @param  colIndex  Index of the column.
     * @return The column at the given index.
     */
-  def colAt(colIndex: Index): Row = rows.map(cellAt(colIndex))
+  def colAt(colIndex: Index): Row = {
+    rows.map(cellAt(colIndex))
+  }
 
   /** Returns a subtable made from the rows of the given indexes.
     *
@@ -49,7 +51,7 @@ trait DataSheet extends Table {
     * @return A table made from the selected rows.
     */
   def rowsAt(rowIndexes: Iterable[Index]): DataSheet = {
-    Sheet(rowIndexes.toVector.map(rows.apply _))
+    CaseSheet(rowIndexes.toVector.map(rows.apply _))
   }
 
   /** Returns a subtable made from the columns of the given indexes.
@@ -67,7 +69,7 @@ trait DataSheet extends Table {
         cellAt(colIndex)(row)
       }
     }
-    Sheet(cols)
+    CaseSheet(cols)
   }
 
   private def cellAt(colIndex: Index)(row: Row): Cell = {
@@ -84,10 +86,18 @@ trait DataSheet extends Table {
     * @param  rowIndex  Index of the desired row.
     * @return The row at rowIndex.
     */
-  def apply(rowIndex: Index): Row = rowAt(rowIndex)
+  def apply(rowIndex: Index): Row = {
+    rowAt(rowIndex)
+  }
 
-  def length = rows.length
+  // for IndexedSeq
+  def length = {
+    rows.length
+  }
 }
+
+/** Simplest implementation of [[DataSheet]]. */
+case class CaseSheet(rows: Table) extends DataSheet
 
 /** Factory object for [[DataSheet]] */
 object DataSheet {
@@ -99,7 +109,7 @@ object DataSheet {
     */
   def apply(url: URL): DataSheet = {
     val ext = url.toString.split('.').last
-    Try(factory(ext)(url)) match {
+    Try(extFactory(ext)(url)) match {
       case Success(sheet) => sheet
       case Failure(nsee: NoSuchElementException) => {
         throw new UnsupportedOperationException(
@@ -119,17 +129,21 @@ object DataSheet {
     apply(path.toUri.toURL)
   }
 
+  def apply(table: Table): DataSheet = {
+    CaseSheet(table)
+  }
+
   private type Factory = URL => DataSheet
-  private val factory = Map[String, Factory](
-    "xlsx" -> (excel _ compose xssf _ ),
-    "xls"  -> (excel _ compose hssf _ ),
+  private val extFactory = Map[String, Factory](
+    "xlsx" -> (excel(0) _ compose xssf _ ),
+    "xls"  -> (excel(0) _ compose hssf _ ),
     "csv"  -> txt(','),
     "ttx"  -> txt('\t'),
     "txt"  -> txt('\t')
   )
 
-  private def excel(book: Workbook): DataSheet = {
-    new ExcelTable(book.getSheetAt(0))
+  private def excel(tab: Int)(book: Workbook): DataSheet = {
+    new ExcelTable(book.getSheetAt(tab))
   }
 
   private def xssf(url: URL): Workbook = {
