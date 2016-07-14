@@ -11,6 +11,7 @@ dependencies {
     testCompile "org.scalatest:scalatest_${sv}:2.2+"
     compile "org.apache.poi:poi:${poi}+"
     compile "org.apache.poi:poi-ooxml:${poi}+"
+    compile "org.jopendocument:jOpenDocument:1.3+"
     compile "org.apache.xmlbeans:xmlbeans:2.6.0"
     compile "org.apache.commons:commons-csv:1.1"
     compile "org.scala-lang:scala-library:${sv}+"

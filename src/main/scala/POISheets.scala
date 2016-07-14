@@ -3,11 +3,9 @@ package com.ptwales.sheets
 import java.util.Date
 import java.text.SimpleDateFormat
 
-import org.apache.poi.xssf.usermodel.XSSFWorkbook
-import org.apache.poi.hssf.usermodel.HSSFWorkbook
-import org.apache.poi.ss.usermodel.{Workbook, Sheet}
-import org.apache.poi.ss.usermodel.{Row => POIRow}
-import org.apache.poi.ss.usermodel.{Cell => POICell}
+import org.apache.poi.ss.usermodel.{Sheet => POISheet}
+import org.apache.poi.ss.usermodel.{Row   => POIRow}
+import org.apache.poi.ss.usermodel.{Cell  => POICell}
 import org.apache.poi.ss.usermodel.DateUtil
 
 import scala.collection.JavaConverters._
@@ -19,7 +17,7 @@ import scala.collection.JavaConverters._
   * @constructor  Create a POITable instance.
   * @param  sheet POI Sheet used to create a table.
   */
-private class ExcelTable(sheet: Sheet) extends DataSheet {
+private class ExcelTable(sheet: POISheet) extends DataSheet {
 
   val rows: Table = {
     val rowIter = sheet.rowIterator.asScala

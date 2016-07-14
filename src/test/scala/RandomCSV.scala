@@ -13,9 +13,9 @@ import org.scalatest.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class RandomCSV extends FunSuite {
 
-  val maxColCount     = 10
-  val maxRowCount     = 10
-  val maxCellSize     = 10
+  val maxColCount     = 5
+  val maxRowCount     = 5
+  val maxCellSize     = 5
 
   val charsetsToTest = Seq("UTF-8").map(Charset.forName(_))
 
