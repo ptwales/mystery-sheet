@@ -19,6 +19,8 @@ trait DataSheet extends Table {
   /** The collection of values as a 2D vector. */
   val rows: Table
 
+  private case class Sheet(rows: Table) extends DataSheet
+
   /** Returns the row at the given index.
     *
     * Literally the same as indexing [[rows]]
@@ -46,8 +48,8 @@ trait DataSheet extends Table {
     * @param  rows  Indexes of the desired rows.
     * @return A table made from the selected rows.
     */
-  def rowsAt(rowIndexes: Iterable[Index]): Table = {
-    rowIndexes.toVector.map(rows.apply _)
+  def rowsAt(rowIndexes: Iterable[Index]): DataSheet = {
+    Sheet(rowIndexes.toVector.map(rows.apply _))
   }
 
   /** Returns a subtable made from the columns of the given indexes.
@@ -58,13 +60,14 @@ trait DataSheet extends Table {
     * @param  cols  Indexes of the desired columns.
     * @return A table made from the selected columns.
     */
-  def colsAt(colIndexes: Iterable[Index]): Table = {
+  def colsAt(colIndexes: Iterable[Index]): DataSheet = {
     val colVec = colIndexes.toVector
-    rows map { row => 
+    val cols = rows map { row => 
       colVec map { colIndex =>
         cellAt(colIndex)(row)
       }
     }
+    Sheet(cols)
   }
 
   private def cellAt(colIndex: Index)(row: Row): Cell = {
@@ -142,5 +145,5 @@ object DataSheet {
   private def txt(delim: Char)(url: URL): DataSheet = {
     CSVSheet.fromSource(io.Source.fromURL(url), colSep=delim)
   }
-
 }
+
