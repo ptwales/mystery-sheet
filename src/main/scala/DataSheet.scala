@@ -14,7 +14,7 @@ import org.apache.poi.ss.usermodel.{Workbook, Sheet}
   * DataSheet unifies the apache poi Sheet object with other common 
   * datasheets to give a simplified representation of the data.
   */
-trait DataSheet {
+trait DataSheet extends Table {
 
   /** The collection of values as a 2D vector. */
   val rows: Table
@@ -67,6 +67,15 @@ trait DataSheet {
     }
   }
 
+  private def cellAt(colIndex: Index)(row: Row): Cell = {
+    if (row.isDefinedAt(colIndex)) row(colIndex)
+    else ""
+  }
+
+  /**********\
+   IndexedSeq
+  \**********/
+
   /** Returns the row at the given index
     *
     * @param  rowIndex  Index of the desired row.
@@ -74,10 +83,7 @@ trait DataSheet {
     */
   def apply(rowIndex: Index): Row = rowAt(rowIndex)
 
-  private def cellAt(colIndex: Index)(row: Row): Cell = {
-    if (row.isDefinedAt(colIndex)) row(colIndex)
-    else ""
-  }
+  def length = rows.length
 }
 
 /** Factory object for [[DataSheet]] */
