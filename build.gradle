@@ -5,16 +5,21 @@ repositories {
 }
 
 dependencies {
-    String sv = '2.11'  // scala version
+    String sv  = '2.11' // scala version
     String poi = '3.13' // apache poi version
+    String oo  = '4.1'  // apache open office version
     testCompile 'junit:junit:4.+'
     testCompile "org.scalatest:scalatest_${sv}:2.2+"
+    compile "org.scala-lang:scala-library:${sv}+"
+
+// CSV
+    compile "org.apache.commons:commons-csv:1.1"
+// Excel
     compile "org.apache.poi:poi:${poi}+"
     compile "org.apache.poi:poi-ooxml:${poi}+"
-    compile "org.jopendocument:jOpenDocument:1.3+"
     compile "org.apache.xmlbeans:xmlbeans:2.6.0"
-    compile "org.apache.commons:commons-csv:1.1"
-    compile "org.scala-lang:scala-library:${sv}+"
+// Open/Libre Office
+    compile "org.apache.odftoolkit:simple-odf:0.8+"
 }
 
 test {

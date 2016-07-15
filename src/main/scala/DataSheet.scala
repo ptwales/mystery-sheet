@@ -4,10 +4,8 @@ import scala.util.{Try, Success, Failure}
 
 import java.nio.file.Path
 import java.net.URL
+import java.io.InputStream
 
-import org.apache.poi.xssf.usermodel.XSSFWorkbook
-import org.apache.poi.hssf.usermodel.HSSFWorkbook
-import org.apache.poi.ss.usermodel.{Workbook, Sheet}
 
 /** Simplified version of a workbook as a Table of values.
   *
@@ -51,7 +49,7 @@ trait DataSheet extends Table {
     * @return A table made from the selected rows.
     */
   def rowsAt(rowIndexes: Iterable[Index]): DataSheet = {
-    CaseSheet(rowIndexes.toVector.map(rows.apply _))
+    Sheet(rowIndexes.toVector.map(rows.apply _))
   }
 
   /** Returns a subtable made from the columns of the given indexes.
@@ -69,7 +67,7 @@ trait DataSheet extends Table {
         cellAt(colIndex)(row)
       }
     }
-    CaseSheet(cols)
+    Sheet(cols)
   }
 
   private def cellAt(colIndex: Index)(row: Row): Cell = {
@@ -97,7 +95,7 @@ trait DataSheet extends Table {
 }
 
 /** Simplest implementation of [[DataSheet]]. */
-case class CaseSheet(rows: Table) extends DataSheet
+case class Sheet(rows: Table) extends DataSheet
 
 /** Factory object for [[DataSheet]] */
 object DataSheet {
@@ -109,14 +107,17 @@ object DataSheet {
     */
   def apply(url: URL): DataSheet = {
     val ext = url.toString.split('.').last
-    Try(extFactory(ext)(url)) match {
-      case Success(sheet) => sheet
-      case Failure(nsee: NoSuchElementException) => {
-        throw new UnsupportedOperationException(
-          s".$ext files are not a supported extension"
-        )
+    val istream = url.openStream
+    try {
+      extFactory(ext)(istream)
+    } catch {
+      case (nsee: NoSuchElementException) => {
+        val msg = s".$ext files are not a supported extension"
+        throw new UnsupportedOperationException(msg)
       }
-      case Failure(e) => throw e
+      case (e: Exception) => throw e
+    } finally {
+      istream.close
     }
   }
 
@@ -130,34 +131,22 @@ object DataSheet {
   }
 
   def apply(table: Table): DataSheet = {
-    CaseSheet(table)
+    Sheet(table)
   }
 
-  private type Factory = URL => DataSheet
+  private type Factory = InputStream => DataSheet
   private val extFactory = Map[String, Factory](
-    "xlsx" -> (excel(0) _ compose xssf _ ),
-    "xls"  -> (excel(0) _ compose hssf _ ),
+    "xlsx" -> ExcelSheet.fromXlsxInput(0),
+    "xls"  -> ExcelSheet.fromXlsInput(0),
     "csv"  -> txt(','),
     "ttx"  -> txt('\t'),
-    "txt"  -> txt('\t')
+    "txt"  -> txt('\t'), 
+    "ods"  -> ODSSheet.fromInput(0)
   )
 
-  private def excel(tab: Int)(book: Workbook): DataSheet = {
-    new ExcelTable(book.getSheetAt(tab))
-  }
-
-  private def xssf(url: URL): Workbook = {
-    val inStream = url.openStream
-    new XSSFWorkbook(inStream)
-  }
-
-  private def hssf(url: URL): Workbook = {
-    val inStream = url.openStream
-    new HSSFWorkbook(inStream)
-  }
-
-  private def txt(delim: Char)(url: URL): DataSheet = {
-    CSVSheet.fromSource(io.Source.fromURL(url), colSep=delim)
+  private def txt(delim: Char)(istream: InputStream): DataSheet = {
+    import scala.io.Source
+    CSVSheet.fromSource(Source.fromInputStream(istream), colSep=delim)
   }
 }
 

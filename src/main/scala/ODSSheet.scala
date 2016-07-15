@@ -1,17 +1,38 @@
 package com.ptwales.sheets
 
-import org.jopendocument.dom.spreadsheet.{Table => JOSheet}
-import org.jopendocument.dom.spreadsheet.{Cell => JOCell}
+import org.odftoolkit.simple.{SpreadsheetDocument => ODSdoc}
+import org.odftoolkit.simple.table.{Table => OOSheet}
+import org.odftoolkit.simple.table.{Row   => OORow}
+import org.odftoolkit.simple.table.{Cell  => OOCell}
 
-class ODSSheet(sheet: JOSheet[_]) extends DataSheet {
+import scala.collection.JavaConverters._
+import java.io.InputStream
 
-  val rows: Table = (0 until sheet.getRowCount) map { r =>
-    (0 until sheet.getColumnCount) map { c =>
-      valueOfCell(sheet.getCellAt(r, c))
-    }
+private class ODSSheet(sheet: OOSheet) extends DataSheet {
+
+  val rows: Table = {
+    val rowIter = sheet.getRowIterator.asScala
+    rowIter.map(readRow(_)).toVector
   }
 
-  private def valueOfCell[T](cell: JOCell[_]): Cell = {
-    cell.getValue.toString
+  private def readRow(row: OORow): Row = {
+    val indexes = (0 until row.getCellCount)
+    indexes.map({ 
+        (r: Int) => valueOfCell(row.getCellByIndex(r))
+      }).toVector
+  }
+
+  private def valueOfCell(cell: OOCell): Cell = {
+    // TODO handle different types
+    cell.getStringValue
+  }
+}
+
+object ODSSheet {
+
+  def fromInput(tab: Int)(istream: InputStream): DataSheet = {
+    val doc = ODSdoc.loadDocument(istream)
+    val sheet = doc.getSheetByIndex(tab)
+    new ODSSheet(sheet)
   }
 }

@@ -3,21 +3,24 @@ package com.ptwales.sheets
 import java.util.Date
 import java.text.SimpleDateFormat
 
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.usermodel.{Sheet => POISheet}
 import org.apache.poi.ss.usermodel.{Row   => POIRow}
 import org.apache.poi.ss.usermodel.{Cell  => POICell}
 import org.apache.poi.ss.usermodel.DateUtil
 
 import scala.collection.JavaConverters._
+import java.io.InputStream
 
 /** Implementation of [[DataSheet]] for excel workbooks.
   *
   * Implementation of [[DataSheet]] for excel workbooks using apache poi library.
   *
-  * @constructor  Create a POITable instance.
+  * @constructor  Create a ExcelTable instance.
   * @param  sheet POI Sheet used to create a table.
   */
-private class ExcelTable(sheet: POISheet) extends DataSheet {
+private class ExcelSheet(sheet: POISheet) extends DataSheet {
 
   val rows: Table = {
     val rowIter = sheet.rowIterator.asScala
@@ -55,4 +58,19 @@ private class ExcelTable(sheet: POISheet) extends DataSheet {
 
   lazy val dateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
   
+}
+
+object ExcelSheet {
+
+  def apply(sheet: POISheet): DataSheet = {
+    new ExcelSheet(sheet)
+  }
+
+  def fromXlsxInput(tab: Int)(istream: InputStream): DataSheet = {
+    apply((new XSSFWorkbook(istream)).getSheetAt(tab))
+  }
+
+  def fromXlsInput(tab: Int)(istream: InputStream): DataSheet = {
+    apply((new HSSFWorkbook(istream)).getSheetAt(tab))
+  }
 }
