@@ -34,7 +34,7 @@ private class ExcelSheet(sheet: POISheet) extends DataSheet {
 
   /** Returns the values of each cell in a row. */
   private def cellsOfRow(row: POIRow): Row = {
-    val first = row.getFirstCellNum
+    val first = 0 // row.getFirstCellNum
     val last = row.getLastCellNum
     val range = first.until(last)
     range map { valueOfCell _ compose row.getCell _ }

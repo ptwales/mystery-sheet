@@ -11,15 +11,21 @@ import java.io.InputStream
 private class ODSSheet(sheet: OOSheet) extends DataSheet {
 
   val rows: Table = {
-    val rowIter = sheet.getRowIterator.asScala
-    rowIter.map(readRow(_)).toVector
+    val rs = sheet.getRowIterator.asScala
+    val rvs = rs.map(readRow(_))
+    rvs.takeWhile(_.length > 0).toVector
   }
 
   private def readRow(row: OORow): Row = {
-    val indexes = (0 until row.getCellCount)
-    indexes.map({ 
-        (r: Int) => valueOfCell(row.getCellByIndex(r))
-      }).toVector
+    val indexes = (sheet.getColumnCount - 1 to 0 by -1)
+    val cellVals = indexes.map(readCell(row))
+    val usedCells = cellVals.dropWhile(_.trim == "")
+    usedCells.reverse.toVector
+  }
+
+  private def readCell(row: OORow)(index: Int): Cell = {
+    val cell: OOCell = row.getCellByIndex(index)
+    valueOfCell(cell)
   }
 
   private def valueOfCell(cell: OOCell): Cell = {
