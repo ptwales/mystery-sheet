@@ -7,10 +7,8 @@ import java.net.URL
 import java.io.InputStream
 
 
-/** Simplified version of a workbook as a Table of values.
+/** Simplified representation of tabular data.
   *
-  * DataSheet unifies the apache poi Sheet object with other common 
-  * datasheets to give a simplified representation of the data.
   */
 trait DataSheet extends Table {
 
