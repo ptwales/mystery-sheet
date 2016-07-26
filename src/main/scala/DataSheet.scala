@@ -34,7 +34,7 @@ trait DataSheet extends Table {
     * @return The column at the given index.
     */
   def colAt(colIndex: Index): Row = {
-    rows.map(cellAt(colIndex))
+    rows.map(cellAt(_, colIndex))
   }
 
   /** Returns a subtable made from the rows of the given indexes.
@@ -59,16 +59,13 @@ trait DataSheet extends Table {
     * @return A table made from the selected columns.
     */
   def colsAt(colIndexes: Iterable[Index]): DataSheet = {
-    val colVec = colIndexes.toVector
     val cols = rows map { row => 
-      colVec map { colIndex =>
-        cellAt(colIndex)(row)
-      }
+      colIndexes.map(cellAt(row, _)).toVector
     }
     Sheet(cols)
   }
 
-  private def cellAt(colIndex: Index)(row: Row): Cell = {
+  private def cellAt(row: Row, colIndex: Index): Cell = {
     if (row.isDefinedAt(colIndex)) row(colIndex)
     else ""
   }
@@ -111,7 +108,7 @@ object DataSheet {
     } catch {
       case (nsee: NoSuchElementException) => {
         val msg = s".$ext files are not a supported extension"
-        throw new UnsupportedOperationException(msg)
+        throw new UnsupportedOperationException(msg, nsee)
       }
       case (e: Exception) => throw e
     } finally {
