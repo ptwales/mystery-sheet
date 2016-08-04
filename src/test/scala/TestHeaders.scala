@@ -15,13 +15,13 @@ class TestHeaderAPI extends FunSuite {
   }
 
   sheets foreach {
-    (ns: (String, DataSheet)) => (new HeaderBattery(ns._2, header)).check
+    (ns: (String, Table)) => (new HeaderBattery(ns._2, header)).check
   }
 }
 
-class HeaderBattery(sheet: DataSheet, header: Header) extends FunSuite {
+class HeaderBattery(sheet: Table, header: Header) extends FunSuite {
 
-  val table = HeadedSheet(sheet, header)
+  val table = HeadedTable(sheet, header)
 
   def check(): Unit = {
 

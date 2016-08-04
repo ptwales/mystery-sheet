@@ -5,7 +5,7 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class TestDataSheet extends FunSuite {
+class TestTable extends FunSuite {
 
   val chars = "abcdefghijklmnopqrstuvwxyz".toList
   val tables = TableLoader.loadTables("data-table")

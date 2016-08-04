@@ -1,11 +1,11 @@
 package com.ptwales.sheets
 
-trait HeadedSheet extends DataSheet {
+trait HeadedTable extends Table {
 
-  /** Return this table as a [[DataSheet]] with no header. */
-  def sheet: DataSheet
+  /** Return this table as a [[Table]] with no header. */
+  def sheet: Table
 
-  /** Return the headers of this HeadedSheet. */
+  /** Return the headers of this HeadedTable. */
   def header: Header
 
   val rows = {
@@ -22,7 +22,7 @@ trait HeadedSheet extends DataSheet {
 
   /** Return the column specified by the given header name.
     * 
-    * Overloads [[DataSheet.colAt]].
+    * Overloads [[Table.colAt]].
     *
     * @param  field   The name of a the column header.
     * @return         The column under the given field.
@@ -31,7 +31,7 @@ trait HeadedSheet extends DataSheet {
 
   /** Return a sub table with the given headers.
     *
-    * Overloads [[DataSheet.colsAt]].
+    * Overloads [[Table.colsAt]].
     * All given fields must be contained in the header.
     *
     * @param  subHeaders  The fields of the selected columns.
@@ -53,22 +53,22 @@ trait HeadedSheet extends DataSheet {
 
 }
 
-/** Factory object for [[HeadedSheet]]. */
-object HeadedSheet {
+/** Factory object for [[HeadedTable]]. */
+object HeadedTable {
   
-  def apply(sheet: DataSheet, header: Header): HeadedSheet = {
+  def apply(sheet: Table, header: Header): HeadedTable = {
     new LabeledSheet(sheet, header)
   }
 
-  def apply(sheet: DataSheet, header: Seq[String]): HeadedSheet = {
+  def apply(sheet: Table, header: Seq[String]): HeadedTable = {
     apply(sheet, header.toVector)
   }
 
-  //def apply(sheet: DataSheet): HeadedSheet
+  //def apply(sheet: Table): HeadedTable
 }
 
-/** Basic implementation of [[HeadedSheet]]. */
-private case class LabeledSheet(sheet: DataSheet, header: Header)
-extends HeadedSheet {
+/** Basic implementation of [[HeadedTable]]. */
+private case class LabeledSheet(sheet: Table, header: Header)
+extends HeadedTable {
   assert(header.distinct.size == header.size)
 }

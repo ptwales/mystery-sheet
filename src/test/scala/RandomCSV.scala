@@ -119,7 +119,7 @@ case class CSVTestCase(
    Validating data
   \***************/
 
-  def check(sheet: DataSheet): Unit = {
+  def check(sheet: Table): Unit = {
 
     assert(sheet.rows.size == data.size)
 

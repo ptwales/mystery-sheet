@@ -11,7 +11,7 @@ import org.apache.commons.csv.{CSVParser, CSVFormat, CSVRecord}
   * Wrapper for Apache Commons CSVFormat file.
   */
 private class CSVSheet(text: String, format: CSVFormat) 
-extends DataSheet {
+extends Table {
 
   /** Returns new a parser for this csv file
     *
@@ -22,7 +22,7 @@ extends DataSheet {
     CSVParser.parse(text, format)
   }
 
-  val rows: Table = {
+  val rows: IndexedSeq[Row] = {
     val lines = parser.getRecords.asScala
     lines.map(readRecord _).toVector
   }
@@ -45,30 +45,30 @@ object CSVSheet {
   /** Assumed quote character is the double quote. */
   val defaultQuote: Char = '"'
 
-  /** Create a new [[DataSheet]] from a string with given settings.
+  /** Create a new [[Table]] from a string with given settings.
     *
     * @param  text    Raw CSV text.
     * @param  colSep  Charater used to separate columns.
     * @param  quote   Character used to quote fields.
-    * @return  A new [[DataSheet]].
+    * @return  A new [[Table]].
     */
   def fromText(text: String, colSep: Char=defaultColSep, 
-               quote: Char=defaultQuote): DataSheet = {
+               quote: Char=defaultQuote): Table = {
     val format = makeCSVFormat(colSep, quote)
     fromText(text, format)
   }
 
-  /** Create a new [[DataSheet]] using a predefined CSVFormat.
+  /** Create a new [[Table]] using a predefined CSVFormat.
     *
     * @param  text    Raw CSV text.
     * @param  format  CSVFormat from apache.commons.csv.
-    * @return  A new [[DataSheet]].
+    * @return  A new [[Table]].
     */
-  def fromText(text: String, format: CSVFormat): DataSheet = {
+  def fromText(text: String, format: CSVFormat): Table = {
     new CSVSheet(text, format)
   }
 
-  /** Create a new [[DataSheet]] using a Source object.
+  /** Create a new [[Table]] using a Source object.
     *
     * This should be replaced with the Java equivalent for better interop with
     * java clients and according to the maintainer scala.io.Source isn't high
@@ -77,15 +77,15 @@ object CSVSheet {
     * @param  src     Source of CSV data.
     * @param  colSep  Charater used to separate columns.
     * @param  quote   Character used to quote fields.
-    * @return  A new [[DataSheet]].
+    * @return  A new [[Table]].
     */
   def fromSource(src: Source, colSep: Char=defaultColSep,
-                 quote: Char=defaultQuote): DataSheet = {
+                 quote: Char=defaultQuote): Table = {
     val format = makeCSVFormat(colSep, quote)
     fromSource(src, format)
   }
 
-  /** Create a new [[DataSheet]] using a Source object and a
+  /** Create a new [[Table]] using a Source object and a
     * predifined CSVFormat.
     *
     * This should be replaced with the Java equivalent for better interop with
@@ -94,9 +94,9 @@ object CSVSheet {
     *
     * @param  src     Source of CSV data.
     * @param  format  CSVFormat from apache.commons.csv.
-    * @return  A new [[DataSheet]].
+    * @return  A new [[Table]].
     */
-  def fromSource(src: Source, format: CSVFormat): DataSheet = {
+  def fromSource(src: Source, format: CSVFormat): Table = {
     val text = try src.mkString finally src.close
     fromText(text, format)
   }

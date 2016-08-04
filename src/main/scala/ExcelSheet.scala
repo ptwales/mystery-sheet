@@ -20,9 +20,9 @@ import java.io.InputStream
   * @constructor  Create a ExcelTable instance.
   * @param  sheet POI Sheet used to create a table.
   */
-private class ExcelSheet(sheet: POISheet) extends DataSheet {
+private class ExcelSheet(sheet: POISheet) extends Table {
 
-  val rows: Table = {
+  val rows: IndexedSeq[Row] = {
     val rowIter = sheet.rowIterator.asScala
     val allRows = rowIter.map(cellsOfRow _)
     val definedRows = allRows takeWhile { (row: Row) =>
@@ -62,15 +62,15 @@ private class ExcelSheet(sheet: POISheet) extends DataSheet {
 
 object ExcelSheet {
 
-  def apply(sheet: POISheet): DataSheet = {
+  def apply(sheet: POISheet): Table = {
     new ExcelSheet(sheet)
   }
 
-  def fromXlsxInput(tab: Int)(istream: InputStream): DataSheet = {
+  def fromXlsxInput(tab: Int)(istream: InputStream): Table = {
     apply((new XSSFWorkbook(istream)).getSheetAt(tab))
   }
 
-  def fromXlsInput(tab: Int)(istream: InputStream): DataSheet = {
+  def fromXlsInput(tab: Int)(istream: InputStream): Table = {
     apply((new HSSFWorkbook(istream)).getSheetAt(tab))
   }
 }

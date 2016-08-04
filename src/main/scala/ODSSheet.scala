@@ -8,9 +8,9 @@ import org.odftoolkit.simple.table.{Cell  => OOCell}
 import scala.collection.JavaConverters._
 import java.io.InputStream
 
-private class ODSSheet(sheet: OOSheet) extends DataSheet {
+private class ODSSheet(sheet: OOSheet) extends Table {
 
-  val rows: Table = {
+  val rows: IndexedSeq[Row] = {
     val rs = sheet.getRowIterator.asScala
     val rvs = rs.map(readRow(_))
     rvs.takeWhile(_.length > 0).toVector
@@ -36,7 +36,7 @@ private class ODSSheet(sheet: OOSheet) extends DataSheet {
 
 object ODSSheet {
 
-  def fromInput(tab: Int)(istream: InputStream): DataSheet = {
+  def fromInput(tab: Int)(istream: InputStream): Table = {
     val doc = ODSdoc.loadDocument(istream)
     val sheet = doc.getSheetByIndex(tab)
     new ODSSheet(sheet)

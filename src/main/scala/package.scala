@@ -13,9 +13,6 @@ package object sheets {
   /** Column is identical to a [[Row]], the difference is purely contextual. */
   type Column = Row
 
-  /** Table is an indexed sequence of Rows. */
-  type Table = IndexedSeq[Row]
-
   /** Indexes are integers. */
   type Index = Int
 

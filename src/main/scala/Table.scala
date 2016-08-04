@@ -10,10 +10,10 @@ import java.io.InputStream
 /** Simplified representation of tabular data.
   *
   */
-trait DataSheet extends Table {
+trait Table extends IndexedSeq[Row] {
 
   /** The collection of values as a 2D vector. */
-  val rows: Table
+  val rows: IndexedSeq[Row]
 
   /** Returns the row at the given index.
     *
@@ -46,7 +46,7 @@ trait DataSheet extends Table {
     * @param  rows  Indexes of the desired rows.
     * @return A table made from the selected rows.
     */
-  def rowsAt(rowIndexes: Iterable[Index]): DataSheet = {
+  def rowsAt(rowIndexes: Iterable[Index]): Table = {
     Sheet(rowIndexes.toVector.map(rows.apply _))
   }
 
@@ -58,7 +58,7 @@ trait DataSheet extends Table {
     * @param  cols  Indexes of the desired columns.
     * @return A table made from the selected columns.
     */
-  def colsAt(colIndexes: Iterable[Index]): DataSheet = {
+  def colsAt(colIndexes: Iterable[Index]): Table = {
     val cols = rows map { row => 
       colIndexes.map(cellAt(row, _)).toVector
     }
@@ -89,18 +89,18 @@ trait DataSheet extends Table {
   }
 }
 
-/** Simplest implementation of [[DataSheet]]. */
-case class Sheet(rows: Table) extends DataSheet
+/** Simplest implementation of [[Table]]. */
+case class Sheet(rows: IndexedSeq[Row]) extends Table
 
-/** Factory object for [[DataSheet]] */
-object DataSheet {
+/** Factory object for [[Table]] */
+object Table {
 
-  /** Returns a [[DataSheet]] from agiven file URL.
+  /** Returns a [[Table]] from agiven file URL.
     * 
     * @param url  URL to a data file.
-    * @return A new [[DataSheet]] instance.
+    * @return A new [[Table]] instance.
     */
-  def apply(url: URL): DataSheet = {
+  def apply(url: URL): Table = {
     val ext = url.toString.split('.').last
     val istream = url.openStream
     try {
@@ -116,20 +116,20 @@ object DataSheet {
     }
   }
 
-  /** Returns an [[DataSheet]] from the given file path.
+  /** Returns an [[Table]] from the given file path.
     *
     * @param  path  Path to a data file.
-    * @return A new [[DataSheet]] instance.
+    * @return A new [[Table]] instance.
     */
-  def apply(path: Path): DataSheet = {
+  def apply(path: Path): Table = {
     apply(path.toUri.toURL)
   }
 
-  def apply(table: Table): DataSheet = {
+  def apply(table: Table): Table = {
     Sheet(table)
   }
 
-  private type Factory = InputStream => DataSheet
+  private type Factory = InputStream => Table
   private val extFactory = Map[String, Factory](
     "xlsx" -> ExcelSheet.fromXlsxInput(0),
     "xls"  -> ExcelSheet.fromXlsInput(0),
@@ -139,7 +139,7 @@ object DataSheet {
     "ods"  -> ODSSheet.fromInput(0)
   )
 
-  private def txt(delim: Char)(istream: InputStream): DataSheet = {
+  private def txt(delim: Char)(istream: InputStream): Table = {
     import scala.io.Source
     CSVSheet.fromSource(Source.fromInputStream(istream), colSep=delim)
   }
