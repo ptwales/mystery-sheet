@@ -15,4 +15,6 @@ libraries for reading different tabular files together into one library.
 ## What will be supported
 
  - Determining the format without trusting the file extension.
+ - Allowing for variance in the header.
+ - Deserialization of headed files.
 
